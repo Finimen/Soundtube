@@ -2,10 +2,17 @@ package handlers
 
 import "github.com/gin-gonic/gin"
 
-func LoginHandler(c *gin.Context) {
+type LoginHandler struct {
+}
+
+func NewLoginHandler() *LoginHandler {
+	return &LoginHandler{}
+}
+
+func Login(c *gin.Context) {
 
 }
 
-func LogoutHandler(c *gin.Context) {
+func Logout(c *gin.Context) {
 
 }

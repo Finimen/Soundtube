@@ -25,6 +25,7 @@ type Redis struct {
 }
 
 type Repository struct {
+	Path string
 }
 
 type Server struct {

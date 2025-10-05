@@ -41,7 +41,7 @@ func main() {
 	defer cancle()
 
 	if err := container.Server.Shutdown(ctx); err != nil {
-		container.Logger.Error(ctx, "Server forced to shutdown", err)
+		container.Logger.Error("Server forced to shutdown", err)
 	}
 
 	container.Logger.Info("initialization completed")

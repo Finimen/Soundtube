@@ -9,12 +9,19 @@ import (
 )
 
 type CustomLogger struct {
-	log    *slog.Logger
-	tracer trace.Tracer
+	log       *slog.Logger
+	tracer    trace.Tracer
+	needTrace bool
 }
 
-func NewLogger(logger *slog.Logger) CustomLogger {
-	return CustomLogger{log: logger}
+type ErrorResponce struct {
+	Logger  *CustomLogger
+	Error   error
+	Messege string
+}
+
+func NewLogger(logger *slog.Logger, needTrace bool) CustomLogger {
+	return CustomLogger{log: logger, needTrace: needTrace}
 }
 
 func (log *CustomLogger) SetTracer(tracer trace.Tracer) {
@@ -25,9 +32,15 @@ func (log *CustomLogger) Info(info string, args ...any) {
 	log.log.Info(info, args)
 }
 
-func (log *CustomLogger) Error(ctx context.Context, msg string, err error) {
-	span := trace.SpanFromContext(ctx)
-	span.RecordError(err)
-	span.SetStatus(codes.Error, msg)
-	log.log.Error(msg, "error", err, "trace_id", span.SpanContext().TraceID().String())
+func (log *CustomLogger) Error(msg string, err error) *ErrorResponce {
+	log.log.Error(msg, "error", err)
+	return &ErrorResponce{Error: err, Messege: msg, Logger: log}
+}
+
+func (err *ErrorResponce) WithTrace(ctx context.Context) *ErrorResponce {
+	if span := trace.SpanFromContext(ctx); err.Logger.needTrace && span.IsRecording() {
+		span.RecordError(err.Error)
+		span.SetStatus(codes.Error, err.Messege)
+	}
+	return err
 }

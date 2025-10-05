@@ -2,6 +2,13 @@ package handlers
 
 import "github.com/gin-gonic/gin"
 
-func RegisterHandler(c *gin.Context) {
+type RegisterHandler struct {
+}
+
+func NewRegisterHandler() *RegisterHandler {
+	return &RegisterHandler{}
+}
+
+func Register(c *gin.Context) {
 
 }

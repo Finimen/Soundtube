@@ -54,7 +54,7 @@ func (c *Container) initCore() error {
 		return err
 	}
 
-	c.Logger = pkg.NewLogger(slog.Default())
+	c.Logger = pkg.NewLogger(slog.Default(), c.Config.Traycing.Enabled)
 
 	c.initRedis()
 	c.initGinEngine()
