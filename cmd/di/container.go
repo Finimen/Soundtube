@@ -13,12 +13,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Container struct {
+	isShuttingDown bool
+
 	Config *config.Config
 
-	Logger *pkg.CustomLogger
+	TraceProvider *tracesdk.TracerProvider
+	Tracer        trace.Tracer
+	Logger        *pkg.CustomLogger
 
 	Engine *gin.Engine
 	Redis  *redis.Client
@@ -88,7 +100,7 @@ func (c *Container) initProdFeatures() {
 
 func (c *Container) initRepositories() error {
 	var err error
-	c.Repository, err = repositories.NewRepositoryAdapter(&c.Config.Repository, c.Logger)
+	c.Repository, err = repositories.NewRepositoryAdapter(&c.Config.Database, &c.Config.DatabaseConnections, c.Redis, c.Logger)
 	if err != nil {
 		return err
 	}
@@ -138,14 +150,77 @@ func (c *Container) initServer() {
 	}
 }
 
-func (c *Container) initTraycing() {
+func (c *Container) initTraycing() error {
+	if !c.Config.Traycing.Enabled {
+		return nil
+	}
 
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(c.Config.Traycing.Endpoint)))
+	if err != nil {
+		return err
+	}
+
+	c.TraceProvider = tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exp),
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(c.Config.Traycing.ServiceName),
+			attribute.String("environment", c.Config.Environment.Current),
+		)),
+	)
+
+	otel.SetTracerProvider(c.TraceProvider)
+
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+
+	c.Tracer = c.TraceProvider.Tracer("app")
+
+	return nil
 }
 
 func (c *Container) initHealthCheck() {
+	c.Engine.GET("/health", func(ctx *gin.Context) {
+		health := map[string]string{
+			"status":    "ok",
+			"timestamp": time.Now().UTC().Format(time.RFC3339),
+		}
 
+		if err := c.Repository.HealthCheck(ctx.Request.Context()); err != nil {
+			health["database"] = "unhealthy"
+			health["status"] = "degraded"
+			ctx.JSON(http.StatusInternalServerError, health)
+			return
+		}
+
+		if err := c.Redis.Ping().Err(); err != nil {
+			health["redis"] = "unhealthy"
+			health["status"] = "degraded"
+			ctx.JSON(http.StatusInternalServerError, health)
+			return
+		}
+
+		health["database"] = "healthy"
+		health["redis"] = "healthy"
+		ctx.JSON(http.StatusOK, health)
+	})
+
+	c.Engine.GET("/ready", func(ctx *gin.Context) {
+		if c.isShuttingDown {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"status": "shutting down"})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"status": "ready"})
+	})
+
+	c.Engine.GET("/live", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"status": "live"})
+	})
 }
 
 func (c *Container) Close() {
-
+	c.isShuttingDown = true
 }
