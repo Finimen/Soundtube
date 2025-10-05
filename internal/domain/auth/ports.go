@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"time"
 )
 
 type IUserRepository interface {
@@ -16,4 +17,9 @@ type IUserRepositoryReader interface {
 
 type IUserRepositoryWriter interface {
 	CreateUser(c context.Context, user *User) error
+}
+
+type ITokenBlacklist interface {
+	Add(ctx context.Context, token string, duration time.Duration) error
+	Exist(ctx context.Context, token string) (bool, error)
 }

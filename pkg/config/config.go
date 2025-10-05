@@ -6,6 +6,7 @@ type Config struct {
 	Repository  Repository  `mapstructure:"repository"`
 	Server      Server      `mapstructure:"server"`
 	Traycing    Traycing    `mapstructure:"traycing"`
+	Token       Token       `mapstructure:"token"`
 }
 
 type Environment struct {
@@ -34,6 +35,11 @@ type Server struct {
 	ReadTimeout  int    `mapstructure:"read_timeout"`
 	WriteTimeout int    `mapstructure:"write_timeout"`
 	IdleTimeout  int    `mapstructure:"idle_timeout"`
+}
+
+type Token struct {
+	JwtKey string `mapstructure:"jwt_key"`
+	Exp    int    `mapstructure:"exp"`
 }
 
 func LoadConfig() (*Config, error) {

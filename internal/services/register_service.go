@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"soundtube/internal/domain/auth"
 	"soundtube/pkg"
 
@@ -10,16 +9,13 @@ import (
 )
 
 type RegisterService struct {
-	repository auth.IUserRepository
-	logger     *pkg.CustomLogger
+	repository   auth.IUserRepository
+	emailService auth.IEmailSener
+	logger       *pkg.CustomLogger
 }
 
-var (
-	UserAlreadyExits = errors.New("user already exists")
-)
-
-func NewRegisterService(repository auth.IUserRepository, logger *pkg.CustomLogger) *RegisterService {
-	return &RegisterService{repository: repository, logger: logger}
+func NewRegisterService(repository auth.IUserRepository, email auth.IEmailSener, logger *pkg.CustomLogger) *RegisterService {
+	return &RegisterService{repository: repository, emailService: email, logger: logger}
 }
 
 func (s *RegisterService) Register(с context.Context, username, email, password string) error {
@@ -62,10 +58,11 @@ func (s *RegisterService) Register(с context.Context, username, email, password
 		return err
 	}
 
+	if err := s.emailService.SendVerificationEmail(email, verifyToken); err != nil {
+		s.logger.Error("verification email failed", err).WithTrace(ctx)
+		return err
+	}
+
 	s.logger.Info("user succesful registrated", user.Username()).WithTrace(ctx)
 	return nil
-}
-
-func generateVerifyToken() (string, error) {
-	return "", nil
 }

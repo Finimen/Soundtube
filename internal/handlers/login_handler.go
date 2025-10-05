@@ -47,6 +47,29 @@ func (h *LoginHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-func Logout(c *gin.Context) {
+func (h *LoginHandler) Logout(c *gin.Context) {
+	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "LoginHandler.Login")
+	defer span.End()
 
+	var req struct {
+		Token string `json:"token"`
+	}
+
+	span.SetAttributes(
+		attribute.String("token", req.Token),
+	)
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Warn(JsonInputFormat, err).WithTrace(ctx)
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	if err := h.service.Logout(c.Request.Context(), req.Token); err != nil {
+		h.logger.Error("logout failed", err).WithTrace(ctx)
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 }
