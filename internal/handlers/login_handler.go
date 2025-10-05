@@ -1,16 +1,50 @@
 package handlers
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+	"soundtube/internal/services"
+	"soundtube/pkg"
+
+	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/attribute"
+)
 
 type LoginHandler struct {
+	service *services.LoginService
+	logger  *pkg.CustomLogger
 }
 
-func NewLoginHandler() *LoginHandler {
-	return &LoginHandler{}
+func NewLoginHandler(service *services.LoginService, logger *pkg.CustomLogger) *LoginHandler {
+	return &LoginHandler{service: service, logger: logger}
 }
 
-func Login(c *gin.Context) {
+func (h *LoginHandler) Login(c *gin.Context) {
+	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "LoginHandler.Login")
+	defer span.End()
 
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Warn(JsonInputFormat, err).WithTrace(ctx)
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	span.SetAttributes(
+		attribute.String("user.name", req.Username),
+	)
+
+	token, err := h.service.Login(ctx, req.Username, req.Password)
+	if err != nil {
+		h.logger.Error("login failed", err).WithTrace(ctx)
+		c.JSON(http.StatusUnauthorized, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func Logout(c *gin.Context) {

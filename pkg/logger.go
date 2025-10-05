@@ -20,6 +20,11 @@ type ErrorResponce struct {
 	Messege string
 }
 
+type InforResponce struct {
+	Logger  *CustomLogger
+	Messege string
+}
+
 func NewLogger(logger *slog.Logger, needTrace bool) CustomLogger {
 	return CustomLogger{log: logger, needTrace: needTrace}
 }
@@ -32,8 +37,16 @@ func (log *CustomLogger) GetTracer() trace.Tracer {
 	return log.tracer
 }
 
-func (log *CustomLogger) Info(info string, args ...any) {
+func (log *CustomLogger) Info(info string, args ...any) *InforResponce {
 	log.log.Info(info, args)
+	return &InforResponce{Logger: log, Messege: info}
+}
+
+func (info *InforResponce) WithTrace(ctx context.Context) *InforResponce {
+	if span := trace.SpanFromContext(ctx); info.Logger.needTrace && span.IsRecording() {
+		span.SetStatus(codes.Ok, info.Messege)
+	}
+	return info
 }
 
 func (log *CustomLogger) Warn(msg string, err error) *ErrorResponce {

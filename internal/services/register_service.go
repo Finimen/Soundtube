@@ -5,6 +5,8 @@ import (
 	"errors"
 	"soundtube/internal/domain/auth"
 	"soundtube/pkg"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterService struct {
@@ -24,13 +26,7 @@ func (s *RegisterService) Register(с context.Context, username, email, password
 	ctx, span := s.logger.GetTracer().Start(с, "RegisterService.Register")
 	defer span.End()
 
-	user, err := auth.NewUser(username, email, password)
-	if err != nil {
-		s.logger.Error("invalid user params", err).WithTrace(ctx)
-		return err
-	}
-
-	existenceUser, err := s.repository.GetUserByName(ctx, user.Username())
+	existenceUser, err := s.repository.GetUserByName(ctx, username)
 	if err != nil {
 		s.logger.Error("failed to check existence user", err).WithTrace(ctx)
 		return err
@@ -38,7 +34,25 @@ func (s *RegisterService) Register(с context.Context, username, email, password
 
 	if existenceUser != nil {
 		err = UserAlreadyExits
-		s.logger.Error("user already exists", err).WithTrace(ctx)
+		s.logger.Warn("user already exists", err).WithTrace(ctx)
+		return err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Error("hashing password failed", err).WithTrace(ctx)
+		return err
+	}
+
+	verifyToken, err := generateVerifyToken()
+	if err != nil {
+		s.logger.Error("failed to generate verification token", err)
+		return err
+	}
+
+	user, err := auth.NewUser(username, email, string(hashedPassword), verifyToken)
+	if err != nil {
+		s.logger.Error("invalid user params", err).WithTrace(ctx)
 		return err
 	}
 
@@ -48,6 +62,10 @@ func (s *RegisterService) Register(с context.Context, username, email, password
 		return err
 	}
 
-	s.logger.Info("user succesful registrated", user.Username())
+	s.logger.Info("user succesful registrated", user.Username()).WithTrace(ctx)
 	return nil
+}
+
+func generateVerifyToken() (string, error) {
+	return "", nil
 }

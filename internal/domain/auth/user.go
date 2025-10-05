@@ -25,7 +25,7 @@ func (u *User) VerifyToken() string { return u.verifyToken }
 
 func (u *User) Password() string { return u.password }
 
-func NewUser(username, email, password string) (*User, error) {
+func NewUser(username, email, password, verifyToken string) (*User, error) {
 	if username == "" || scripts.ValidateXSS(username) {
 		return nil, errors.New("username cannot be empty")
 	}
@@ -35,13 +35,17 @@ func NewUser(username, email, password string) (*User, error) {
 	if !scripts.ValidateEmail(email) {
 		return nil, errors.New("invalid email")
 	}
+	if verifyToken == "" || scripts.ValidateXSS(verifyToken) {
+		return nil, errors.New("username cannot be empty")
+	}
 
 	return &User{
-		username:   username,
-		email:      email,
-		password:   password,
-		isVerified: false,
-		isBanned:   false,
+		username:    username,
+		email:       email,
+		password:    password,
+		verifyToken: verifyToken,
+		isVerified:  false,
+		isBanned:    false,
 	}, nil
 }
 

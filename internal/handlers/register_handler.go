@@ -29,7 +29,7 @@ func (h *RegisterHandler) Register(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("invalid input format", err).WithTrace(ctx)
+		h.logger.Warn(JsonInputFormat, err).WithTrace(ctx)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
