@@ -28,8 +28,17 @@ func (log *CustomLogger) SetTracer(tracer trace.Tracer) {
 	log.tracer = tracer
 }
 
+func (log *CustomLogger) GetTracer() trace.Tracer {
+	return log.tracer
+}
+
 func (log *CustomLogger) Info(info string, args ...any) {
 	log.log.Info(info, args)
+}
+
+func (log *CustomLogger) Warn(msg string, err error) *ErrorResponce {
+	log.log.Warn(msg, "error", err)
+	return &ErrorResponce{Error: err, Messege: msg, Logger: log}
 }
 
 func (log *CustomLogger) Error(msg string, err error) *ErrorResponce {

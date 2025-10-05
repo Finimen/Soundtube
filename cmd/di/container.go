@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"soundtube/internal/handlers"
+	"soundtube/internal/services"
 	"soundtube/pkg"
 	"soundtube/pkg/config"
 	"time"
@@ -21,6 +22,12 @@ type Container struct {
 	Redis  *redis.Client
 
 	Server *http.Server
+
+	RegisterHandler *handlers.RegisterHandler
+	LoginHandler    *handlers.LoginHandler
+
+	RegisterService *services.RegisterService
+	LoginService    *services.LoginService
 }
 
 func NewContainer() (*Container, error) {
@@ -78,9 +85,9 @@ func (c *Container) initGinEngine() {
 	{
 		var auth = api.Group("/auth", nil)
 		{
-			auth.POST("/register", handlers.RegisterHandler)
-			auth.POST("/login", handlers.LoginHandler)
-			auth.POST("/logout", handlers.LogoutHandler)
+			auth.POST("/register", c.RegisterHandler.Register)
+			auth.POST("/login", c.LoginHandler.Login)
+			auth.POST("/logout", c.LoginHandler.Logout)
 		}
 	}
 }
