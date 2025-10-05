@@ -3,7 +3,9 @@ package di
 import (
 	"log/slog"
 	"net/http"
+	"soundtube/internal/domain/auth"
 	"soundtube/internal/handlers"
+	"soundtube/internal/repositories"
 	"soundtube/internal/services"
 	"soundtube/pkg"
 	"soundtube/pkg/config"
@@ -16,16 +18,19 @@ import (
 type Container struct {
 	Config *config.Config
 
-	Logger pkg.CustomLogger
+	Logger *pkg.CustomLogger
 
 	Engine *gin.Engine
 	Redis  *redis.Client
 
 	Server *http.Server
 
+	Repository *repositories.RepositoryAdapter
+
 	RegisterHandler *handlers.RegisterHandler
 	LoginHandler    *handlers.LoginHandler
 
+	Email           auth.IEmailSener
 	RegisterService *services.RegisterService
 	LoginService    *services.LoginService
 }
@@ -50,10 +55,6 @@ func (c *Container) init() error {
 	return nil
 }
 
-func (c *Container) Close() {
-
-}
-
 func (c *Container) initCore() error {
 	var err error
 	c.Config, err = config.LoadConfig()
@@ -62,6 +63,13 @@ func (c *Container) initCore() error {
 	}
 
 	c.Logger = pkg.NewLogger(slog.Default(), c.Config.Traycing.Enabled)
+
+	if err = c.initRepositories(); err != nil {
+		return err
+	}
+
+	c.initServices()
+	c.initHandlers()
 
 	c.initRedis()
 	c.initGinEngine()
@@ -76,6 +84,27 @@ func (c *Container) initProdFeatures() {
 	c.initTraycing()
 
 	c.Logger.Info("prod features initialization were successful")
+}
+
+func (c *Container) initRepositories() error {
+	var err error
+	c.Repository, err = repositories.NewRepositoryAdapter(&c.Config.Repository, c.Logger)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Container) initServices() {
+	c.Email = services.NewEmailService(nil, c.Server.Addr, c.Config.Email.From, c.Logger)
+	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
+	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.Repository.TokenBlacklist, c.Logger)
+}
+
+func (c *Container) initHandlers() {
+	c.RegisterHandler = handlers.NewRegisterHandler(c.RegisterService, c.Logger)
+	c.LoginHandler = handlers.NewLoginHandler(c.LoginService, c.Logger)
 }
 
 func (c *Container) initGinEngine() {
@@ -114,5 +143,9 @@ func (c *Container) initTraycing() {
 }
 
 func (c *Container) initHealthCheck() {
+
+}
+
+func (c *Container) Close() {
 
 }

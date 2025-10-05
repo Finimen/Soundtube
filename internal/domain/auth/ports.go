@@ -23,3 +23,7 @@ type ITokenBlacklist interface {
 	Add(ctx context.Context, token string, duration time.Duration) error
 	Exist(ctx context.Context, token string) (bool, error)
 }
+
+type IEmailSener interface {
+	SendVerificationEmail(ctx context.Context, email, verifyToken string) error
+}

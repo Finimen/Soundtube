@@ -7,6 +7,7 @@ type Config struct {
 	Server      Server      `mapstructure:"server"`
 	Traycing    Traycing    `mapstructure:"traycing"`
 	Token       Token       `mapstructure:"token"`
+	Email       Email       `mapstructure:"email"`
 }
 
 type Environment struct {
@@ -40,6 +41,10 @@ type Server struct {
 type Token struct {
 	JwtKey string `mapstructure:"jwt_key"`
 	Exp    int    `mapstructure:"exp"`
+}
+
+type Email struct {
+	From string `mapstructure:"from"`
 }
 
 func LoadConfig() (*Config, error) {

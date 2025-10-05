@@ -58,7 +58,7 @@ func (s *RegisterService) Register(с context.Context, username, email, password
 		return err
 	}
 
-	if err := s.emailService.SendVerificationEmail(email, verifyToken); err != nil {
+	if err := s.emailService.SendVerificationEmail(ctx, email, verifyToken); err != nil {
 		s.logger.Error("verification email failed", err).WithTrace(ctx)
 		return err
 	}

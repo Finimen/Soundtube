@@ -25,8 +25,8 @@ type InforResponce struct {
 	Messege string
 }
 
-func NewLogger(logger *slog.Logger, needTrace bool) CustomLogger {
-	return CustomLogger{log: logger, needTrace: needTrace}
+func NewLogger(logger *slog.Logger, needTrace bool) *CustomLogger {
+	return &CustomLogger{log: logger, needTrace: needTrace}
 }
 
 func (log *CustomLogger) SetTracer(tracer trace.Tracer) {
