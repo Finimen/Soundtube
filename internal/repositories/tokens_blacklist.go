@@ -19,7 +19,7 @@ func NewTokenBlacklist(client *redis.Client, logger *pkg.CustomLogger) *TokenBla
 }
 
 func (t *TokenBlacklist) Add(ctx context.Context, token string, expiration time.Duration) error {
-	ctx, span := t.logger.GetTracer().Start(ctx, "TokenBlacklist.Add")
+	_, span := t.logger.GetTracer().Start(ctx, "TokenBlacklist.Add")
 	defer span.End()
 
 	span.SetAttributes(

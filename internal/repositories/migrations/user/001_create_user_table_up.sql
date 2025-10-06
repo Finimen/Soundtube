@@ -8,3 +8,8 @@ CREATE TABLE IF NOT EXISTS users(
     verify_token VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(user_name);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(user_email);
+CREATE INDEX IF NOT EXISTS idx_users_verified ON users(is_verified);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);

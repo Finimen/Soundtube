@@ -40,7 +40,7 @@ func (s *EmailService) SendVerificationEmail(ctx context.Context, email, verifyT
 		attribute.String("token", verifyToken),
 	)
 
-	verifyLink := fmt.Sprintf(s.addr+"verify-email?token=%s", email)
+	verifyLink := fmt.Sprintf(s.addr+"verify-email?token=%s", verifyToken)
 
 	htmlBody := fmt.Sprintf(`
 		<!DOCTYPE html>

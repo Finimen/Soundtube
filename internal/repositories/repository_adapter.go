@@ -8,17 +8,16 @@ import (
 	"soundtube/pkg/config"
 	"time"
 
-	"github.com/go-redis/redis"
 	_ "github.com/lib/pq"
 )
 
 type RepositoryAdapter struct {
 	db *sql.DB
 	*UserRepository
-	*TokenBlacklist
+	*SoundRepository
 }
 
-func NewRepositoryAdapter(dbCfg *config.Database, connCfg *config.DatabaseConnections, client *redis.Client, logger *pkg.CustomLogger) (*RepositoryAdapter, error) {
+func NewRepositoryAdapter(dbCfg *config.Database, connCfg *config.DatabaseConnections, logger *pkg.CustomLogger) (*RepositoryAdapter, error) {
 	var ctx = context.Background()
 	var adapter = RepositoryAdapter{}
 	var err error
@@ -41,12 +40,15 @@ func NewRepositoryAdapter(dbCfg *config.Database, connCfg *config.DatabaseConnec
 		return nil, err
 	}
 
-	if adapter.UserRepository, err = NewUserRepository(adapter.db); err != nil {
-		logger.Error("repository initialization completed", err).WithTrace(ctx)
+	if adapter.UserRepository, err = NewUserRepository(adapter.db, logger); err != nil {
+		logger.Error("user repository failed", err).WithTrace(ctx)
 		return nil, err
 	}
 
-	adapter.TokenBlacklist = NewTokenBlacklist(client, logger)
+	if adapter.SoundRepository, err = NewSoundRepository(adapter.db, logger); err != nil {
+		logger.Error("sound repository failed", err).WithTrace(ctx)
+		return nil, err
+	}
 
 	logger.Info("repository initialization completed")
 	return &adapter, nil

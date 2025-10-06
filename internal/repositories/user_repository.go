@@ -5,18 +5,22 @@ import (
 	"database/sql"
 	_ "embed"
 	"soundtube/internal/domain/auth"
+	"soundtube/pkg"
 )
 
 type UserRepository struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *pkg.CustomLogger
 }
 
 //go:embed migrations/user/001_create_user_table_up.sql
 var createUserTable string
 
-func NewUserRepository(db *sql.DB) (*UserRepository, error) {
-	var userRepository = UserRepository{}
-	userRepository.db = db
+func NewUserRepository(db *sql.DB, logger *pkg.CustomLogger) (*UserRepository, error) {
+	var userRepository = UserRepository{
+		db:     db,
+		logger: logger,
+	}
 
 	_, err := db.Exec(createUserTable)
 	if err != nil {
@@ -27,6 +31,9 @@ func NewUserRepository(db *sql.DB) (*UserRepository, error) {
 }
 
 func (r *UserRepository) GetUserByName(ctx context.Context, name string) (*auth.User, error) {
+	ctx, span := r.logger.GetTracer().Start(ctx, "UserRepository.GetUserByName")
+	defer span.End()
+
 	query := `SELECT id, user_password, user_email, is_verified, is_banned, verify_token
 				FROM users WHERE user_name = $1`
 	row := r.db.QueryRowContext(ctx, query, name)
@@ -43,6 +50,9 @@ func (r *UserRepository) GetUserByName(ctx context.Context, name string) (*auth.
 }
 
 func (r *UserRepository) GetUserByID(ctx context.Context, id int) (*auth.User, error) {
+	ctx, span := r.logger.GetTracer().Start(ctx, "UserRepository.GetUserByName")
+	defer span.End()
+
 	query := `SELECT user_name, user_password, user_email, is_verified, is_banned, verify_token
 				FROM users WHERE id = $1`
 	row := r.db.QueryRowContext(ctx, query, id)
@@ -58,7 +68,25 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id int) (*auth.User, e
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *auth.User) error {
-	query := `INSERT INTO users (user_name, user_email, user_password, is_verified, is_banned, verify_token)`
-	_, err := r.db.ExecContext(ctx, query, user.Username(), user.Email(), user.Password(), user.IsVerified(), user.IsBanned(), user.VerifyToken())
+	ctx, span := r.logger.GetTracer().Start(ctx, "UserRepository.GetUserByName")
+	defer span.End()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO users (user_name, user_email, user_password, is_verified, is_banned, verify_token)
+		VALUES ($1, $2, $3, $4, $5, $6)`
+	_, err = tx.ExecContext(ctx, query, user.Username(), user.Email(), user.Password(), user.IsVerified(), user.IsBanned(), user.VerifyToken())
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
 	return err
 }

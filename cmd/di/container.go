@@ -40,14 +40,19 @@ type Container struct {
 
 	RateLimiter *pkg.RateLimiter
 
+	TokenBlackList auth.ITokenBlacklist
+
 	Repository *repositories.RepositoryAdapter
 
 	RegisterHandler *handlers.RegisterHandler
 	LoginHandler    *handlers.LoginHandler
+	SoundHandler    *handlers.SoundHandler
+	CommentHandler  *handlers.CommentHandler
 
 	Email           auth.IEmailSener
 	RegisterService *services.RegisterService
 	LoginService    *services.LoginService
+	SoundService    *services.SoundService
 }
 
 func NewContainer() (*Container, error) {
@@ -105,10 +110,12 @@ func (c *Container) initProdFeatures() {
 
 func (c *Container) initRepositories() error {
 	var err error
-	c.Repository, err = repositories.NewRepositoryAdapter(&c.Config.Database, &c.Config.DatabaseConnections, c.Redis, c.Logger)
+	c.Repository, err = repositories.NewRepositoryAdapter(&c.Config.Database, &c.Config.DatabaseConnections, c.Logger)
 	if err != nil {
 		return err
 	}
+
+	c.TokenBlackList = repositories.NewTokenBlacklist(c.Redis, c.Logger)
 
 	return nil
 }
@@ -116,12 +123,14 @@ func (c *Container) initRepositories() error {
 func (c *Container) initServices() {
 	c.Email = services.NewEmailService(&c.Config.Email, c.Logger)
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
-	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.Repository.TokenBlacklist, c.Logger)
+	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.TokenBlackList, c.Logger)
+	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Logger)
 }
 
 func (c *Container) initHandlers() {
 	c.RegisterHandler = handlers.NewRegisterHandler(c.RegisterService, c.Logger)
 	c.LoginHandler = handlers.NewLoginHandler(c.LoginService, c.Logger)
+	c.SoundHandler = handlers.NewSoundHandler(c.SoundService, c.Logger)
 }
 
 func (c *Container) initGinEngine() {
@@ -131,13 +140,33 @@ func (c *Container) initGinEngine() {
 	c.Engine.Use(middleware.RequsetIDMiddleware())
 	c.Engine.Use(middleware.RateLimiterMiddleware(c.RateLimiter))
 
-	var api = c.Engine.Group("/api", nil)
+	var api = c.Engine.Group("/api")
 	{
-		var auth = api.Group("/auth", nil)
+		var auth = api.Group("/auth")
 		{
 			auth.POST("/register", c.RegisterHandler.Register)
 			auth.POST("/login", c.LoginHandler.Login)
 			auth.POST("/logout", c.LoginHandler.Logout)
+		}
+
+		var authRequered = api.Group("")
+		authRequered.Use(middleware.AuthMiddleware(c.LoginService, c.Logger))
+
+		var sounds = authRequered.Group("/sounds")
+		{
+			sounds.GET("/", c.SoundHandler.GetSounds)
+			sounds.POST("/", c.SoundHandler.CreateSound)
+			sounds.PATCH("/:id", c.SoundHandler.UpdateSound)
+			sounds.DELETE("/:id", c.SoundHandler.DeleteSound)
+
+			sounds.GET("/:id/comments", c.CommentHandler.GetComments)
+			sounds.POST("/:id/comments", c.CommentHandler.CreateComment)
+		}
+
+		var comments = authRequered.Group("/comments")
+		{
+			comments.PATCH("/:id", c.CommentHandler.UpdateComment)
+			comments.DELETE("/:id", c.CommentHandler.DeleteComment)
 		}
 	}
 }
