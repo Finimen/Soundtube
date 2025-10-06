@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS sounds(
     file_format VARCHAR(10) NOT NULL,
     upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'active'
-)
+);
 
-CREATE INDEX idx_sounds_author_id ON sounds(author_id)
-CREATE INDEX idx_sounds_genre ON sounds(sound_genre) 
+CREATE INDEX IF NOT EXISTS idx_sounds_author_id ON sounds(author_id);
+CREATE INDEX IF NOT EXISTS idx_sounds_genre ON sounds(sound_genre);

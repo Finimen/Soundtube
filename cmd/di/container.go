@@ -140,6 +140,9 @@ func (c *Container) initGinEngine() {
 	c.Engine.Use(middleware.RequsetIDMiddleware())
 	c.Engine.Use(middleware.RateLimiterMiddleware(c.RateLimiter))
 
+	c.Engine.Static("/static", "../../static")
+	c.Engine.LoadHTMLGlob("../../static/*.html")
+
 	var api = c.Engine.Group("/api")
 	{
 		var auth = api.Group("/auth")
@@ -169,6 +172,10 @@ func (c *Container) initGinEngine() {
 			comments.DELETE("/:id", c.CommentHandler.DeleteComment)
 		}
 	}
+
+	c.Engine.NoRoute(func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "index.html", nil)
+	})
 }
 
 func (c *Container) initRedis() {
@@ -182,6 +189,7 @@ func (c *Container) initRedis() {
 func (c *Container) initServer() {
 	c.Server = &http.Server{
 		Addr:         c.Config.Server.Port,
+		Handler:      c.Engine,
 		ReadTimeout:  time.Duration(c.Config.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(c.Config.Server.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(c.Config.Server.IdleTimeout) * time.Second,

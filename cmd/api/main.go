@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,7 +29,8 @@ func main() {
 	container.Logger.Info("initialization completed")
 
 	go func() {
-		container.Logger.Info("Server is starting on http://localhost%s\n", container.Server.Addr)
+		info := fmt.Sprintf("Server is starting on http://localhost%s\n", container.Server.Addr)
+		container.Logger.Info(info)
 		if err := container.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			container.Logger.Info("listen: http://localhost%s\n", err)
 		}

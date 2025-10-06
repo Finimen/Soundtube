@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users(
     is_banned BOOLEAN DEFAULT FALSE,
     verify_token VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(user_name);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(user_email);
