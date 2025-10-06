@@ -9,6 +9,7 @@ import (
 	"soundtube/internal/services"
 	"soundtube/pkg"
 	"soundtube/pkg/config"
+	"soundtube/pkg/middleware"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,8 @@ type Container struct {
 	Redis  *redis.Client
 
 	Server *http.Server
+
+	RateLimiter *pkg.RateLimiter
 
 	Repository *repositories.RepositoryAdapter
 
@@ -80,6 +83,8 @@ func (c *Container) initCore() error {
 		return err
 	}
 
+	c.initRateLimiter()
+
 	c.initServices()
 	c.initHandlers()
 
@@ -122,6 +127,10 @@ func (c *Container) initHandlers() {
 func (c *Container) initGinEngine() {
 	c.Engine = gin.Default()
 
+	c.Engine.Use(middleware.SecurityMiddleware())
+	c.Engine.Use(middleware.RequsetIDMiddleware())
+	c.Engine.Use(middleware.RateLimiterMiddleware(c.RateLimiter))
+
 	var api = c.Engine.Group("/api", nil)
 	{
 		var auth = api.Group("/auth", nil)
@@ -148,6 +157,10 @@ func (c *Container) initServer() {
 		WriteTimeout: time.Duration(c.Config.Server.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(c.Config.Server.IdleTimeout) * time.Second,
 	}
+}
+
+func (c *Container) initRateLimiter() {
+	c.RateLimiter = pkg.NewRateLimiter(&c.Config.RateLimiter)
 }
 
 func (c *Container) initTraycing() error {
@@ -221,6 +234,12 @@ func (c *Container) initHealthCheck() {
 	})
 }
 
-func (c *Container) Close() {
+func (c *Container) Close() error {
 	c.isShuttingDown = true
+
+	if err := c.Repository.Close(); err != nil {
+		return err
+	}
+
+	return nil
 }

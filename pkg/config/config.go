@@ -16,6 +16,7 @@ type Config struct {
 	Traycing            Traycing            `mapstructure:"traycing"`
 	Token               Token               `mapstructure:"token"`
 	Email               Email               `mapstructure:"email"`
+	RateLimiter         RateLimiter         `mapstructure:"rate_limiter"`
 }
 
 type Environment struct {
@@ -68,6 +69,11 @@ type Email struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
 	From     string `mapstructure:"from"`
+}
+
+type RateLimiter struct {
+	MaxRequests int `mapstructure:"max_requests"`
+	Window      int `mapstructure:"window"`
 }
 
 func LoadConfig() (*Config, error) {

@@ -42,3 +42,7 @@ email:
   username: 
   password: 
   from: 
+
+rate_limiter:
+  max_requests: 
+  window: 
