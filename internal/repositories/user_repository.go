@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"soundtube/internal/domain/auth"
 )
 
@@ -10,9 +11,18 @@ type UserRepository struct {
 	db *sql.DB
 }
 
+//go:embed migrations/user/001_create_user_table_up.sql
+var createUserTable string
+
 func NewUserRepository(db *sql.DB) (*UserRepository, error) {
 	var userRepository = UserRepository{}
 	userRepository.db = db
+
+	_, err := db.Exec(createUserTable)
+	if err != nil {
+		return nil, err
+	}
+
 	return &userRepository, nil
 }
 

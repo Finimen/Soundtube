@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"time"
 
 	"github.com/spf13/viper"
@@ -62,18 +63,19 @@ type Token struct {
 }
 
 type Email struct {
-	From string `mapstructure:"from"`
+	SMTHost  string `mapstructure:"smtHost"`
+	SMTPort  string `mapstructure:"smtPort"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	From     string `mapstructure:"from"`
 }
 
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("dev")
-	viper.AddConfigPath("./config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("../.././configs")
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	viper.AutomaticEnv()
@@ -88,10 +90,13 @@ func LoadConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	if &config.Traycing == nil {
+		return nil, errors.New("config loading failed")
+	}
 
 	if len(config.Token.JwtKey) < 16 {
 		panic("invalid jwt key")
 	}
 
-	return nil, nil
+	return &config, nil
 }

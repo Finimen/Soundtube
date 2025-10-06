@@ -1,0 +1,44 @@
+# config/test.yaml
+
+environment:
+  current: 
+
+redis:
+  addr: 
+  password: 
+  db: 
+
+database:
+  host: 
+  port: 
+  user: 
+  password: 
+  dbname: 
+
+database_connections:
+  max_open_conns: 
+  max_idle_conns: 
+  max_life_time: 
+  max_idle_time: 
+
+server:
+  port: 
+  cookie_secure: 
+  read_timeout: 
+  write_timeout: 
+  idle_timeout: 
+
+traycing:
+  enabled: 
+  service_name: 
+  endpoint: 
+
+token:
+  jwt_key: 
+
+email:
+  smtHost: 
+  smtPort: 
+  username: 
+  password: 
+  from: 

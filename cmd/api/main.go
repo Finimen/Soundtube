@@ -25,6 +25,8 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
+	container.Logger.Info("initialization completed")
+
 	go func() {
 		container.Logger.Info("Server is starting on http://localhost%s\n", container.Server.Addr)
 		if err := container.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -44,5 +46,5 @@ func main() {
 		container.Logger.Error("Server forced to shutdown", err)
 	}
 
-	container.Logger.Info("initialization completed")
+	container.Logger.Info("OK ")
 }

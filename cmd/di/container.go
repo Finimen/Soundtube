@@ -109,7 +109,7 @@ func (c *Container) initRepositories() error {
 }
 
 func (c *Container) initServices() {
-	c.Email = services.NewEmailService(nil, c.Server.Addr, c.Config.Email.From, c.Logger)
+	c.Email = services.NewEmailService(&c.Config.Email, c.Logger)
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
 	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.Repository.TokenBlacklist, c.Logger)
 }

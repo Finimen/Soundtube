@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	_ "github.com/lib/pq"
 )
 
 type RepositoryAdapter struct {
@@ -22,7 +23,7 @@ func NewRepositoryAdapter(dbCfg *config.Database, connCfg *config.DatabaseConnec
 	var adapter = RepositoryAdapter{}
 	var err error
 	conn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.DBName)
-	adapter.db, err = sql.Open("postgress", conn)
+	adapter.db, err = sql.Open("postgres", conn)
 	if err != nil {
 		logger.Error("repository initialization completed", err).WithTrace(ctx)
 		return nil, err

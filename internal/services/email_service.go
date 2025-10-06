@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"soundtube/pkg"
+	"soundtube/pkg/config"
+	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gopkg.in/gomail.v2"
@@ -18,8 +20,15 @@ type EmailService struct {
 	from   string
 }
 
-func NewEmailService(dialer *gomail.Dialer, addr, from string, logger *pkg.CustomLogger) *EmailService {
-	return &EmailService{dialer: dialer, addr: addr, from: from, logger: logger}
+func NewEmailService(cfg *config.Email, logger *pkg.CustomLogger) *EmailService {
+	var port, _ = strconv.Atoi(cfg.SMTPort)
+	var dialer = gomail.NewDialer(cfg.SMTHost, port, cfg.Username, cfg.Password)
+
+	return &EmailService{
+		logger: logger,
+		dialer: dialer,
+		from:   cfg.From,
+	}
 }
 
 func (s *EmailService) SendVerificationEmail(ctx context.Context, email, verifyToken string) error {

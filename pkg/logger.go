@@ -38,7 +38,7 @@ func (log *CustomLogger) GetTracer() trace.Tracer {
 }
 
 func (log *CustomLogger) Info(info string, args ...any) *InforResponce {
-	log.log.Info(info, args)
+	log.log.Info(info, args...)
 	return &InforResponce{Logger: log, Messege: info}
 }
 
