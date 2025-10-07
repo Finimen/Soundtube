@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"soundtube/internal/domain/auth"
 	"soundtube/pkg"
 	"soundtube/pkg/config"
 	"strconv"
@@ -14,19 +16,21 @@ import (
 )
 
 type EmailService struct {
-	logger *pkg.CustomLogger
-	dialer *gomail.Dialer
-	addr   string
-	from   string
+	logger     *pkg.CustomLogger
+	repository auth.IUserRepository
+	dialer     *gomail.Dialer
+	addr       string
+	from       string
 }
 
-func NewEmailService(cfg *config.Email, logger *pkg.CustomLogger) *EmailService {
+func NewEmailService(fullAddr string, cfg *config.Email, logger *pkg.CustomLogger) *EmailService {
 	var port, _ = strconv.Atoi(cfg.SMTPort)
 	var dialer = gomail.NewDialer(cfg.SMTHost, port, cfg.Username, cfg.Password)
 
 	return &EmailService{
 		logger: logger,
 		dialer: dialer,
+		addr:   fullAddr,
 		from:   cfg.From,
 	}
 }
@@ -40,7 +44,7 @@ func (s *EmailService) SendVerificationEmail(ctx context.Context, email, verifyT
 		attribute.String("token", verifyToken),
 	)
 
-	verifyLink := fmt.Sprintf(s.addr+"verify-email?token=%s", verifyToken)
+	verifyLink := fmt.Sprintf(s.addr+"/api/auth"+"/verify-email?token=%s", verifyToken)
 
 	htmlBody := fmt.Sprintf(`
 		<!DOCTYPE html>
@@ -99,6 +103,39 @@ func (s *EmailService) SendVerificationEmail(ctx context.Context, email, verifyT
 	}
 
 	s.logger.Info("sending verify email", "email", email, "link", verifyLink).WithTrace(ctx)
+	return nil
+}
+
+func (s *EmailService) VerifyEmail(ctx context.Context, id int) error {
+	_, span := s.logger.GetTracer().Start(ctx, "EmailService.VerifyEmail")
+	defer span.End()
+
+	user, err := s.repository.GetUserByID(ctx, id)
+	if err != nil {
+		s.logger.Error("db error", err).WithTrace(ctx)
+		return err
+	}
+
+	if user == nil {
+		err = errors.New("user not found")
+		s.logger.Error("incorrect user", err).WithTrace(ctx)
+		return err
+	}
+
+	if user.IsVerified() {
+		err = errors.New("user already verified")
+		s.logger.Error("incorrect user", err).WithTrace(ctx)
+		return err
+	}
+
+	err = s.repository.MarkUserAsVerified(ctx, id)
+	if err != nil {
+		s.logger.Error("db error", err).WithTrace(ctx)
+		return err
+	}
+
+	s.logger.Info("verify for user ", id, " is competed").WithTrace(ctx)
+
 	return nil
 }
 

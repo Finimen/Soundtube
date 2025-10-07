@@ -51,6 +51,7 @@ type DatabaseConnections struct {
 }
 
 type Server struct {
+	Host         string `mapstructure:"host"`
 	Port         string `mapstructure:"port"`
 	CookieSecure bool   `mapstructure:"cookie_secure"`
 	ReadTimeout  int    `mapstructure:"read_timeout"`

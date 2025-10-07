@@ -43,6 +43,9 @@ func (r *UserRepository) GetUserByName(ctx context.Context, name string) (*auth.
 	var isVerified, isBanned bool
 	err := row.Scan(&id, &password, &email, &isVerified, &isBanned, &verifyToken)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned)
@@ -61,6 +64,9 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id int) (*auth.User, e
 	var isVerified, isBanned bool
 	err := row.Scan(&id, &password, &email, &isVerified, &isBanned, &verifyToken)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned)
@@ -89,4 +95,33 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *auth.User) error 
 	}
 
 	return err
+}
+
+func (r *UserRepository) DeleteUser(ctx context.Context, id int) error {
+	ctx, span := r.logger.GetTracer().Start(ctx, "UserRepository.DeleteUser")
+	defer span.End()
+
+	query := "DELETE FROM users WHERE id = $1"
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		r.logger.Error("delete user failed", err).WithTrace(ctx)
+		return err
+	}
+
+	return nil
+}
+
+func (r *UserRepository) MarkUserAsVerified(ctx context.Context, id int) error {
+	ctx, span := r.logger.GetTracer().Start(ctx, "UserRepository.MarkUserAsVerified")
+	defer span.End()
+
+	query := "UPDATE users SET is_verified = true WHERE id = $1"
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		r.logger.Error("Verify update failed", err).WithTrace(ctx)
+		return err
+	}
+
+	return nil
 }

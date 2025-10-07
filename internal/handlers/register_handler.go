@@ -34,6 +34,8 @@ func (h *RegisterHandler) Register(c *gin.Context) {
 		return
 	}
 
+	h.logger.Info(req.Username, req.Password, req.Email)
+
 	span.SetAttributes(
 		attribute.String("user.username", req.Username),
 		attribute.String("user.password", req.Password),

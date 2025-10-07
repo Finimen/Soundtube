@@ -46,10 +46,11 @@ type Container struct {
 
 	RegisterHandler *handlers.RegisterHandler
 	LoginHandler    *handlers.LoginHandler
+	VerifyHandler   *handlers.EmailHandler
 	SoundHandler    *handlers.SoundHandler
 	CommentHandler  *handlers.CommentHandler
 
-	Email           auth.IEmailSener
+	Email           *services.EmailService
 	RegisterService *services.RegisterService
 	LoginService    *services.LoginService
 	SoundService    *services.SoundService
@@ -121,7 +122,7 @@ func (c *Container) initRepositories() error {
 }
 
 func (c *Container) initServices() {
-	c.Email = services.NewEmailService(&c.Config.Email, c.Logger)
+	c.Email = services.NewEmailService(c.Config.Server.Host+c.Config.Server.Port, &c.Config.Email, c.Logger)
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
 	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.TokenBlackList, c.Logger)
 	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Logger)
@@ -131,6 +132,7 @@ func (c *Container) initHandlers() {
 	c.RegisterHandler = handlers.NewRegisterHandler(c.RegisterService, c.Logger)
 	c.LoginHandler = handlers.NewLoginHandler(c.LoginService, c.Logger)
 	c.SoundHandler = handlers.NewSoundHandler(c.SoundService, c.Logger)
+	c.VerifyHandler = handlers.NewEmailHandler(c.Email, c.Logger)
 }
 
 func (c *Container) initGinEngine() {
@@ -150,6 +152,7 @@ func (c *Container) initGinEngine() {
 			auth.POST("/register", c.RegisterHandler.Register)
 			auth.POST("/login", c.LoginHandler.Login)
 			auth.POST("/logout", c.LoginHandler.Logout)
+			auth.POST("verify-email", c.VerifyHandler.VerifyEmail)
 		}
 
 		var authRequered = api.Group("")
@@ -227,6 +230,8 @@ func (c *Container) initTraycing() error {
 	))
 
 	c.Tracer = c.TraceProvider.Tracer("app")
+
+	c.Logger.SetTracer(c.Tracer)
 
 	return nil
 }
