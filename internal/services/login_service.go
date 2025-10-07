@@ -68,9 +68,6 @@ func (s *LoginService) Login(ctx context.Context, username, password string) (st
 		"iat":      now.Unix(),
 	})
 
-	fmt.Println("TOKEN LIFE TIME:")
-	fmt.Println(now.Add(time.Duration(s.exp) * time.Second).Unix())
-
 	tokenString, err := token.SignedString(s.jwtkey)
 	if err != nil {
 		s.logger.Error("token generation error", err).WithTrace(ctx)
@@ -116,31 +113,49 @@ func (s *LoginService) Logout(ctx context.Context, token string) error {
 	return nil
 }
 
-func (s *LoginService) ValidToken(ctx context.Context, token string) (string, error) {
+func (s *LoginService) ValidToken(ctx context.Context, token string) (string, int, error) {
 	ctx, span := s.logger.GetTracer().Start(ctx, "LoginService.ValidateToken")
 	defer span.End()
 
 	inBlacklist, err := s.blackList.Exist(ctx, token)
 	if err != nil {
 		s.logger.Error("blacklist check failed", err)
-		return "", err
+		return "", 0, err
 	}
 	if inBlacklist {
-		return "", errors.New("token is revoked")
+		return "", 0, errors.New("token is revoked")
 	}
 
 	parsed, err := jwt.Parse(token, func(t *jwt.Token) (any, error) {
 		return s.jwtkey, nil
 	})
 	if err != nil || !parsed.Valid {
-		return "", errors.New("invalid token")
+		return "", 0, errors.New("invalid token")
 	}
 
 	claims, ok := parsed.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", errors.New("invalid token claims")
+		return "", 0, errors.New("invalid token claims")
 	}
 
 	username, _ := claims["username"].(string)
-	return username, nil
+
+	var userID int
+	switch sub := claims["sub"].(type) {
+	case float64:
+		userID = int(sub)
+	case int:
+		userID = sub
+	case int64:
+		userID = int(sub)
+	default:
+		return "", 0, errors.New("invalid user id type in token")
+	}
+
+	s.logger.Info("Token validation",
+		"username", username,
+		"userID", userID,
+		"sub_type", fmt.Sprintf("%T", claims["sub"])).WithTrace(ctx)
+
+	return username, userID, nil
 }

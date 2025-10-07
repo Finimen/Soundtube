@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS sounds;
+
 CREATE TABLE IF NOT EXISTS sounds(
     id SERIAL PRIMARY KEY,
     author_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -5,9 +7,10 @@ CREATE TABLE IF NOT EXISTS sounds(
     sound_album VARCHAR(255),
     sound_genre VARCHAR(100),
     duration INTEGER,
-    file_name VARCHAR(500) NOT NULL,
-    file_size BIGINT NOT NULL,
-    file_format VARCHAR(10) NOT NULL,
+    file_name VARCHAR(500),
+    file_path VARCHAR(500),
+    file_size BIGINT,
+    file_format VARCHAR(10),
     upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'active'
 );

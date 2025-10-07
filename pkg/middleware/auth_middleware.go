@@ -31,7 +31,7 @@ func AuthMiddleware(s *services.LoginService, l *pkg.CustomLogger) gin.HandlerFu
 
 		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
 
-		username, err := s.ValidToken(ctx.Request.Context(), tokenStr)
+		username, userID, err := s.ValidToken(ctx.Request.Context(), tokenStr)
 		if err != nil {
 			l.Error("invalid token", err)
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -40,6 +40,7 @@ func AuthMiddleware(s *services.LoginService, l *pkg.CustomLogger) gin.HandlerFu
 		}
 
 		ctx.Set("username", username)
+		ctx.Set("user_id", userID)
 		ctx.Set("token", tokenStr)
 
 		l.Info("request authorized ", "username", username)

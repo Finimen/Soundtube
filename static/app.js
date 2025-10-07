@@ -18,7 +18,69 @@ document.addEventListener('DOMContentLoaded', function() {
             hideAuthModal();
         }
     });
+
+    // Initialize drag and drop
+    initializeFileDrop();
 });
+
+function initializeFileDrop() {
+    const dropArea = document.getElementById('fileDropArea');
+    const fileInput = document.getElementById('soundFile');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('highlight');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    dropArea.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        handleFiles(files);
+    }
+    
+    function handleFileSelect() {
+        handleFiles(this.files);
+    }
+    
+    function handleFiles(files) {
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('audio/')) {
+                dropArea.querySelector('.file-msg').textContent = `Выбран файл: ${file.name}`;
+            } else {
+                alert('Пожалуйста, выберите аудио файл');
+                fileInput.value = '';
+                dropArea.querySelector('.file-msg').textContent = 'Перетащите аудио файл сюда или нажмите для выбора';
+            }
+        }
+    }
+}
 
 function showUnauthorizedMessage() {
     const soundsList = document.getElementById('soundsList');
@@ -225,131 +287,90 @@ async function loadSounds() {
 function createSoundElement(sound) {
     const div = document.createElement('div');
     div.className = 'sound-item';
+    
+    // Match backend sound structure
     div.innerHTML = `
-        <div class="sound-title">${escapeHtml(sound.title)}</div>
-        <div class="sound-description">${escapeHtml(sound.description || '')}</div>
+        <div class="sound-title">${escapeHtml(sound.name)}</div>
+        <div class="sound-info">
+            <span class="sound-album">Альбом: ${escapeHtml(sound.album)}</span>
+            <span class="sound-genre">Жанр: ${escapeHtml(sound.genre)}</span>
+        </div>
         <div class="sound-author" style="color: #888; font-size: 0.9rem; margin-bottom: 10px;">
-            Автор: ${escapeHtml(sound.author_name || 'Неизвестен')}
+            Автор ID: ${sound.author_id}
         </div>
-        <audio controls style="width: 100%; margin: 10px 0;">
-            <source src="/static/${sound.file_path}" type="audio/mpeg">
-            Ваш браузер не поддерживает аудио элементы.
-        </audio>
-        <div class="comments-section">
-            <h4>Комментарии</h4>
-            <div id="comments-${sound.id}">
-                <!-- Комментарии будут загружены здесь -->
-            </div>
-            ${currentToken ? `
-                <div class="comment-form">
-                    <textarea class="form-control" id="comment-text-${sound.id}" placeholder="Добавить комментарий..."></textarea>
-                    <button class="btn btn-primary" onclick="addComment(${sound.id})" style="margin-top: 10px;">Отправить</button>
-                </div>
-            ` : '<p>Войдите, чтобы комментировать</p>'}
-        </div>
+        ${sound.file_path ? `
+            <audio controls style="width: 100%; margin: 10px 0;">
+                <source src="/static/${sound.file_path}" type="audio/mpeg">
+                Ваш браузер не поддерживает аудио элементы.
+            </audio>
+        ` : '<p>Аудио файл не загружен</p>'}
     `;
     
-    loadComments(sound.id);
-    
     return div;
-}
-
-async function loadComments(soundId) {
-    if (!currentToken) return;
-
-    try {
-        const response = await fetch(`${API_BASE}/sounds/${soundId}/comments`, {
-            headers: {
-                'Authorization': `Bearer ${currentToken}`
-            }
-        });
-
-        if (response.ok) {
-            const comments = await response.json();
-            const commentsContainer = document.getElementById(`comments-${soundId}`);
-            commentsContainer.innerHTML = '';
-            
-            if (comments.length === 0) {
-                commentsContainer.innerHTML = '<p>Пока нет комментариев. Будьте первым!</p>';
-            } else {
-                comments.forEach(comment => {
-                    const commentElement = document.createElement('div');
-                    commentElement.className = 'comment';
-                    commentElement.innerHTML = `
-                        <strong>${escapeHtml(comment.author_name)}</strong>
-                        <p>${escapeHtml(comment.text)}</p>
-                    `;
-                    commentsContainer.appendChild(commentElement);
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки комментариев:', error);
-    }
-}
-
-async function addComment(soundId) {
-    if (!currentToken) {
-        alert('Для комментирования необходимо авторизоваться');
-        return;
-    }
-
-    const text = document.getElementById(`comment-text-${soundId}`).value;
-    if (!text.trim()) {
-        alert('Введите текст комментария');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/sounds/${soundId}/comments`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentToken}`
-            },
-            body: JSON.stringify({ text })
-        });
-
-        if (response.ok) {
-            document.getElementById(`comment-text-${soundId}`).value = '';
-            loadComments(soundId);
-        } else {
-            alert('Ошибка при добавлении комментария');
-        }
-    } catch (error) {
-        alert('Ошибка сети: ' + error.message);
-    }
 }
 
 document.getElementById('uploadForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     if (!currentToken) {
-        alert('Для загрузки трека необходимо авторизоваться');
+        alert('Для создания трека необходимо авторизоваться');
         return;
     }
 
-    const formData = new FormData();
-    formData.append('title', document.getElementById('soundTitle').value);
-    formData.append('description', document.getElementById('soundDescription').value);
-    formData.append('file', document.getElementById('soundFile').files[0]);
+    const name = document.getElementById('soundName').value;
+    const album = document.getElementById('soundAlbum').value;
+    const genre = document.getElementById('soundGenre').value;
+    const file = document.getElementById('soundFile').files[0];
+
+    if (!name || !album || !genre) {
+        alert('Пожалуйста, заполните все поля');
+        return;
+    }
+
+    if (!file) {
+        alert('Пожалуйста, выберите аудио файл');
+        return;
+    }
 
     try {
-        const response = await fetch(`${API_BASE}/sounds/`, {
+        const soundResponse = await fetch(`${API_BASE}/sounds/`, {
             method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${currentToken}`
             },
-            body: formData
+            body: JSON.stringify({ 
+                name: name,
+                album: album,
+                genre: genre
+            })
         });
 
-        if (response.ok) {
-            alert('Трек успешно загружен!');
-            document.getElementById('uploadForm').reset();
-            loadSounds();
+        if (soundResponse.ok) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('name', name);
+
+            const fileResponse = await fetch(`${API_BASE}/sounds/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: formData
+            });
+
+            if (fileResponse.ok) {
+                alert('Трек успешно создан и файл загружен!');
+                document.getElementById('uploadForm').reset();
+                document.getElementById('fileDropArea').querySelector('.file-msg').textContent = 
+                    'Перетащите аудио файл сюда или нажмите для выбора';
+                loadSounds();
+            } else {
+                alert('Ошибка загрузки файла');
+            }
         } else {
-            const error = await response.text();
-            alert('Ошибка загрузки: ' + error);
+            const error = await soundResponse.text();
+            alert('Ошибка создания трека: ' + error);
         }
     } catch (error) {
         alert('Ошибка сети: ' + error.message);
@@ -365,6 +386,7 @@ function showUploadSection() {
 }
 
 function escapeHtml(unsafe) {
+    if (!unsafe) return '';
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

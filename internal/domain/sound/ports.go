@@ -16,4 +16,5 @@ type ISoundRepositoryReader interface {
 type ISoundRepositoryWriter interface {
 	CreateSound(ctx context.Context, sound *Sound) error
 	DeleteSound(ctx context.Context, sound *Sound) error
+	UpdateSoundFile(ctx context.Context, name, filename, filepath string, fileSize int64) error
 }

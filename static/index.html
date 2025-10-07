@@ -25,18 +25,24 @@
 
     <div class="container">
         <div class="upload-section hidden" id="uploadSection">
-            <h3>Загрузить новый звук</h3>
+            <h3>Загрузить новый трек</h3>
             <form id="uploadForm">
                 <div class="form-group">
-                    <input type="text" class="form-control" id="soundTitle" placeholder="Название трека" required>
+                    <input type="text" class="form-control" id="soundName" placeholder="Название трека" required>
                 </div>
                 <div class="form-group">
-                    <textarea class="form-control" id="soundDescription" placeholder="Описание трека"></textarea>
+                    <input type="text" class="form-control" id="soundAlbum" placeholder="Альбом" required>
                 </div>
                 <div class="form-group">
-                    <input type="file" class="form-control" id="soundFile" accept="audio/*" required>
+                    <input type="text" class="form-control" id="soundGenre" placeholder="Жанр" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Загрузить</button>
+                <div class="form-group">
+                    <div class="file-drop-area" id="fileDropArea">
+                        <span class="file-msg">Перетащите аудио файл сюда или нажмите для выбора</span>
+                        <input type="file" class="file-input" id="soundFile" accept="audio/*" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Создать трек</button>
             </form>
         </div>
 

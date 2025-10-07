@@ -44,7 +44,7 @@ func NewUser(username, email, password, verifyToken string) (*User, error) {
 		email:       email,
 		password:    password,
 		verifyToken: verifyToken,
-		isVerified:  false,
+		isVerified:  true,
 		isBanned:    false,
 	}, nil
 }

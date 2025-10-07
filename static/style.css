@@ -184,3 +184,41 @@ textarea.form-control {
     font-size: 12px;
     margin-top: 5px;
 }
+
+.file-drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.file-drop-area:hover {
+    border-color: #007bff;
+}
+
+.file-drop-area.highlight {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.file-msg {
+    color: #666;
+    display: block;
+}
+
+.file-input {
+    display: none;
+}
+
+.sound-info {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.sound-album, .sound-genre {
+    display: inline-block;
+    margin-right: 15px;
+}

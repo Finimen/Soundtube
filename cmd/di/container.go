@@ -49,6 +49,7 @@ type Container struct {
 	VerifyHandler   *handlers.EmailHandler
 	SoundHandler    *handlers.SoundHandler
 	CommentHandler  *handlers.CommentHandler
+	UploadHandler   *handlers.UploadHandler
 
 	Email           *services.EmailService
 	RegisterService *services.RegisterService
@@ -125,7 +126,7 @@ func (c *Container) initServices() {
 	c.Email = services.NewEmailService(c.Repository.UserRepository, c.Config.Server.Host+c.Config.Server.Port, &c.Config.Email, c.Logger)
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
 	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.TokenBlackList, c.Logger)
-	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Logger)
+	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Repository.UserRepository, c.Logger)
 }
 
 func (c *Container) initHandlers() {
@@ -133,6 +134,7 @@ func (c *Container) initHandlers() {
 	c.LoginHandler = handlers.NewLoginHandler(c.LoginService, c.Logger)
 	c.SoundHandler = handlers.NewSoundHandler(c.SoundService, c.Logger)
 	c.VerifyHandler = handlers.NewEmailHandler(c.Email, c.Logger)
+	c.UploadHandler = handlers.NewUploadHandler(c.SoundService, c.Logger)
 }
 
 func (c *Container) initGinEngine() {
@@ -162,6 +164,7 @@ func (c *Container) initGinEngine() {
 		{
 			sounds.GET("/", c.SoundHandler.GetSounds)
 			sounds.POST("/", c.SoundHandler.CreateSound)
+			sounds.POST("/upload", c.UploadHandler.UploadSoundFile)
 			sounds.PATCH("/:id", c.SoundHandler.UpdateSound)
 			sounds.DELETE("/:id", c.SoundHandler.DeleteSound)
 

@@ -147,3 +147,12 @@ func (r *UserRepository) MarkUserAsVerified(ctx context.Context, id int) error {
 
 	return nil
 }
+
+func (r *UserRepository) UserExists(ctx context.Context, userID int) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)", userID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}

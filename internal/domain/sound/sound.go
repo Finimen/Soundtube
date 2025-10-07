@@ -11,6 +11,7 @@ type Sound struct {
 	duration int
 
 	fileName   string
+	filePath   string
 	fileSize   int
 	fileFormat string
 
@@ -27,6 +28,7 @@ func (s *Sound) Genre() string { return s.genre }
 func (s *Sound) Duration() int { return s.duration }
 
 func (s *Sound) FileName() string   { return s.fileName }
+func (s *Sound) FilePath() string   { return s.filePath }
 func (s *Sound) FileSize() int      { return s.fileSize }
 func (s *Sound) FileFormat() string { return s.fileFormat }
 
@@ -52,7 +54,7 @@ func NewSound(name, album, genre string, authorID int) (*Sound, error) {
 	}, nil
 }
 
-func RebuildSoundFromStorage(id, authorID, duration int, name, album, genre, fileName string, fileSize int, fileFormat, uploadDate string) *Sound {
+func RebuildSoundFromStorage(id, authorID, duration int, name, album, genre, fileName, filePath string, fileSize int, fileFormat, uploadDate string) *Sound {
 	return &Sound{
 		id:         id,
 		authorID:   authorID,
@@ -61,6 +63,7 @@ func RebuildSoundFromStorage(id, authorID, duration int, name, album, genre, fil
 		genre:      genre,
 		duration:   duration,
 		fileName:   fileName,
+		filePath:   filePath,
 		fileSize:   fileSize,
 		fileFormat: fileFormat,
 		uploadDate: uploadDate,
