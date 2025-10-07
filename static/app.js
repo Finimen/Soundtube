@@ -288,19 +288,26 @@ function createSoundElement(sound) {
     const div = document.createElement('div');
     div.className = 'sound-item';
     
-    // Match backend sound structure
+    console.log('Sound data:', sound);
+    
+    const soundName = sound.name || sound.title || 'Без названия';
+    const soundAlbum = sound.album || 'Не указан';
+    const soundGenre = sound.genre || 'Не указан';
+    const authorId = sound.author_id || sound.authorID || 'Неизвестен';
+    const filePath = sound.file_path || sound.filePath || sound.filename;
+    
     div.innerHTML = `
-        <div class="sound-title">${escapeHtml(sound.name)}</div>
+        <div class="sound-title">${escapeHtml(soundName)}</div>
         <div class="sound-info">
-            <span class="sound-album">Альбом: ${escapeHtml(sound.album)}</span>
-            <span class="sound-genre">Жанр: ${escapeHtml(sound.genre)}</span>
+            <span class="sound-album">Альбом: ${escapeHtml(soundAlbum)}</span>
+            <span class="sound-genre">Жанр: ${escapeHtml(soundGenre)}</span>
         </div>
         <div class="sound-author" style="color: #888; font-size: 0.9rem; margin-bottom: 10px;">
-            Автор ID: ${sound.author_id}
+            Автор ID: ${authorId}
         </div>
-        ${sound.file_path ? `
+        ${filePath ? `
             <audio controls style="width: 100%; margin: 10px 0;">
-                <source src="/static/${sound.file_path}" type="audio/mpeg">
+                <source src="/static/${filePath}" type="audio/mpeg">
                 Ваш браузер не поддерживает аудио элементы.
             </audio>
         ` : '<p>Аудио файл не загружен</p>'}

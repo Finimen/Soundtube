@@ -25,28 +25,28 @@ func (h *UploadHandler) UploadSoundFile(c *gin.Context) {
 	defer span.End()
 
 	wd, _ := os.Getwd()
-	h.logger.Info("Current working directory: " + wd).WithTrace(ctx)
+	projectRoot := filepath.Join(wd, "..", "..")
+	h.logger.Info("Project root directory: " + projectRoot).WithTrace(ctx)
 
 	file, err := c.FormFile("file")
 	if err != nil {
 		h.logger.Error("failed to get file from form", err).WithTrace(ctx)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is requered"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
 		return
 	}
 
 	name := c.PostForm("name")
 	if name == "" {
-		h.logger.Error("sound name is requered", err).WithTrace(ctx)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "sound name is requered"})
+		h.logger.Error("sound name is required", err).WithTrace(ctx)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "sound name is required"})
 		return
 	}
 
-	uploadPath := "static/uploads"
+	uploadDir := "static/uploads"
+	fullUploadDir := filepath.Join(projectRoot, uploadDir)
+	h.logger.Info("Full upload directory: " + fullUploadDir).WithTrace(ctx)
 
-	fullUploadPath := filepath.Join(wd, uploadPath)
-	h.logger.Info("Full upload path: " + fullUploadPath).WithTrace(ctx)
-
-	if err := ensureUploadDir(uploadPath); err != nil {
+	if err := ensureUploadDir(fullUploadDir); err != nil {
 		h.logger.Error("failed to create upload directory", err).WithTrace(ctx)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create upload directory"})
 		return
@@ -54,46 +54,46 @@ func (h *UploadHandler) UploadSoundFile(c *gin.Context) {
 
 	fileExt := filepath.Ext(file.Filename)
 	fileName := fmt.Sprintf("%s%s", name, fileExt)
-	filePath := filepath.Join(uploadPath, fileName)
 
-	h.logger.Info("Saving file to: " + filePath).WithTrace(ctx)
+	savePath := filepath.Join(fullUploadDir, fileName)
 
-	if err := c.SaveUploadedFile(file, filePath); err != nil {
+	dbFilePath := filepath.Join("uploads", fileName)
+
+	h.logger.Info("Saving file to: " + savePath).WithTrace(ctx)
+	h.logger.Info("DB file path: " + dbFilePath).WithTrace(ctx)
+
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
 		h.logger.Error("failed to save file", err).WithTrace(ctx)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
 		return
 	}
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		h.logger.Error("file was not created at: "+filePath, err).WithTrace(ctx)
-
-		absPath, _ := filepath.Abs(filePath)
-		h.logger.Info("Trying absolute path: " + absPath).WithTrace(ctx)
-		if _, err := os.Stat(absPath); os.IsNotExist(err) {
-			h.logger.Error("file was not created at absolute path either", err).WithTrace(ctx)
-		} else {
-			h.logger.Info("File found at absolute path: " + absPath).WithTrace(ctx)
-		}
-
+	if _, err := os.Stat(savePath); os.IsNotExist(err) {
+		h.logger.Error("file was not created at: "+savePath, err).WithTrace(ctx)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "file was not created"})
 		return
 	}
 
-	fileInfo, _ := os.Stat(filePath)
+	fileInfo, _ := os.Stat(savePath)
 	h.logger.Info("File successfully saved. Size: %d bytes", fileInfo.Size()).WithTrace(ctx)
 
-	if err := h.service.UpdateSoundFile(ctx, name, fileName, filePath, file.Size); err != nil {
+	if err := h.service.UpdateSoundFile(ctx, name, fileName, dbFilePath, file.Size); err != nil {
 		h.logger.Error("failed to update sound file info", err).WithTrace(ctx)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update sound record"})
 		return
 	}
 
-	h.logger.Info("file uploaded successfully", "filename", fileName, "size", file.Size, "path", filePath).WithTrace(ctx)
+	h.logger.Info("file uploaded successfully",
+		"filename", fileName,
+		"size", file.Size,
+		"db_path", dbFilePath,
+		"save_path", savePath).WithTrace(ctx)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":   "file uploaded successfully",
 		"filename":  fileName,
-		"path":      filePath,
-		"full_path": filepath.Join(wd, filePath),
+		"path":      dbFilePath,
+		"full_path": savePath,
 	})
 }
 

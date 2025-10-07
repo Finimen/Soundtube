@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"soundtube/internal/domain/sound"
 	"soundtube/internal/services"
 	"soundtube/pkg"
 	"strconv"
@@ -30,8 +31,10 @@ func (h *SoundHandler) GetSounds(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Getted " + strconv.Itoa(len(sounds)) + " from storage").WithTrace(ctx)
-	c.JSON(http.StatusOK, sounds)
+	soundDTOs := sound.SoundsToDTO(sounds)
+
+	h.logger.Info("Getted " + strconv.Itoa(len(soundDTOs)) + " from storage").WithTrace(ctx)
+	c.JSON(http.StatusOK, soundDTOs)
 }
 
 func (h *SoundHandler) CreateSound(c *gin.Context) {
