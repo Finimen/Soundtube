@@ -48,7 +48,7 @@ func (r *UserRepository) GetUserByName(ctx context.Context, name string) (*auth.
 		}
 		return nil, err
 	}
-	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned)
+	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned, verifyToken)
 	return user, nil
 }
 
@@ -69,7 +69,29 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id int) (*auth.User, e
 		}
 		return nil, err
 	}
-	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned)
+	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned, verifyToken)
+	return user, nil
+}
+
+func (r *UserRepository) GetUserByToken(ctx context.Context, token string) (*auth.User, error) {
+	ctx, span := r.logger.GetTracer().Start(ctx, "UserRepository.GetUserByName")
+	defer span.End()
+
+	query := `SELECT id, user_name, user_password, user_email, is_verified, is_banned
+				FROM users WHERE verify_token = $1`
+	row := r.db.QueryRowContext(ctx, query, token)
+
+	var id int
+	var name, password, email string
+	var isVerified, isBanned bool
+	err := row.Scan(&id, &name, &password, &email, &isVerified, &isBanned)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	user := auth.RebuildUserFromStorage(id, name, email, password, isVerified, isBanned, token)
 	return user, nil
 }
 

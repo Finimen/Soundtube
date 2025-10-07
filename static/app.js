@@ -149,11 +149,15 @@ async function login() {
 
         if (response.ok) {
             const data = await response.json();
-            currentToken = data.token;
-            currentUserName = data.user?.name || username;
+            console.log('Login response:', data); 
+            
+            currentToken = data.token || data; 
+            currentUserName = username; 
             
             localStorage.setItem('authToken', currentToken);
             localStorage.setItem('userName', currentUserName);
+            
+            console.log('Token saved:', currentToken);
             
             hideAuthModal();
             checkAuth();
@@ -166,9 +170,6 @@ async function login() {
         alert('Ошибка сети: ' + error.message);
     }
 }
-
-// Остальные функции остаются без изменений...
-// logout, loadSounds, createSoundElement, loadComments, addComment, и т.д.
 
 async function logout() {
     try {

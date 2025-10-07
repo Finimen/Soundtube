@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"soundtube/internal/domain/auth"
 	"soundtube/pkg"
 	"soundtube/pkg/config"
@@ -56,12 +57,19 @@ func (s *LoginService) Login(ctx context.Context, username, password string) (st
 		return "", err
 	}
 
+	now := time.Now()
+
+	expiration := time.Hour
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":      user.ID(),
 		"username": username,
-		"exp":      time.Now().Add(time.Duration(s.exp)).Unix(),
-		"iat":      time.Now(),
+		"exp":      now.Add(expiration).Unix(),
+		"iat":      now.Unix(),
 	})
+
+	fmt.Println("TOKEN LIFE TIME:")
+	fmt.Println(now.Add(time.Duration(s.exp) * time.Second).Unix())
 
 	tokenString, err := token.SignedString(s.jwtkey)
 	if err != nil {

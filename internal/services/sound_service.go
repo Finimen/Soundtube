@@ -16,11 +16,11 @@ func NewSoundService(repository sound.ISoundRepository, logger *pkg.CustomLogger
 	return &SoundService{repository: repository, logger: logger}
 }
 
-func (s *SoundService) CreateSound(ctx context.Context, name, album, genre string, author_id int) error {
+func (s *SoundService) CreateSound(ctx context.Context, name, album, genre string, authorID int) error {
 	ctx, span := s.logger.GetTracer().Start(ctx, "SoundService.CreateSound")
 	defer span.End()
 
-	sound, err := sound.NewSound(name, album, genre, author_id)
+	sound, err := sound.NewSound(name, album, genre, authorID)
 	if err != nil {
 		s.logger.Error("invalid sound params", err).WithTrace(ctx)
 		return err

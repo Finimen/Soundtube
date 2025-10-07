@@ -49,14 +49,15 @@ func NewUser(username, email, password, verifyToken string) (*User, error) {
 	}, nil
 }
 
-func RebuildUserFromStorage(id int, username, email, password string, isVerified, isBanned bool) *User {
+func RebuildUserFromStorage(id int, username, email, password string, isVerified, isBanned bool, token string) *User {
 	return &User{
-		id:         id,
-		username:   username,
-		email:      email,
-		password:   password,
-		isVerified: isVerified,
-		isBanned:   isBanned,
+		id:          id,
+		username:    username,
+		email:       email,
+		password:    password,
+		isVerified:  isVerified,
+		isBanned:    isBanned,
+		verifyToken: token,
 	}
 }
 

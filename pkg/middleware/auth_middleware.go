@@ -13,6 +13,14 @@ import (
 func AuthMiddleware(s *services.LoginService, l *pkg.CustomLogger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tokenStr := ctx.GetHeader("Authorization")
+
+		l.Info("Auth middleware started",
+			"path", ctx.Request.URL.Path,
+			"method", ctx.Request.Method,
+			"authorization_header", tokenStr,
+			"header_length", len(tokenStr),
+		)
+
 		if tokenStr == "" {
 			var err = errors.New("emty token")
 			l.Error("missing authorization header", err)

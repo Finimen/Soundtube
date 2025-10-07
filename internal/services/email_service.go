@@ -23,15 +23,16 @@ type EmailService struct {
 	from       string
 }
 
-func NewEmailService(fullAddr string, cfg *config.Email, logger *pkg.CustomLogger) *EmailService {
+func NewEmailService(repositoory auth.IUserRepository, fullAddr string, cfg *config.Email, logger *pkg.CustomLogger) *EmailService {
 	var port, _ = strconv.Atoi(cfg.SMTPort)
 	var dialer = gomail.NewDialer(cfg.SMTHost, port, cfg.Username, cfg.Password)
 
 	return &EmailService{
-		logger: logger,
-		dialer: dialer,
-		addr:   fullAddr,
-		from:   cfg.From,
+		repository: repositoory,
+		logger:     logger,
+		dialer:     dialer,
+		addr:       fullAddr,
+		from:       cfg.From,
 	}
 }
 
@@ -45,6 +46,8 @@ func (s *EmailService) SendVerificationEmail(ctx context.Context, email, verifyT
 	)
 
 	verifyLink := fmt.Sprintf(s.addr+"/api/auth"+"/verify-email?token=%s", verifyToken)
+
+	s.logger.Info("created link ni email service: ", verifyLink).WithTrace(ctx)
 
 	htmlBody := fmt.Sprintf(`
 		<!DOCTYPE html>
@@ -106,11 +109,11 @@ func (s *EmailService) SendVerificationEmail(ctx context.Context, email, verifyT
 	return nil
 }
 
-func (s *EmailService) VerifyEmail(ctx context.Context, id int) error {
+func (s *EmailService) VerifyEmail(ctx context.Context, token string) error {
 	_, span := s.logger.GetTracer().Start(ctx, "EmailService.VerifyEmail")
 	defer span.End()
 
-	user, err := s.repository.GetUserByID(ctx, id)
+	user, err := s.repository.GetUserByToken(ctx, token)
 	if err != nil {
 		s.logger.Error("db error", err).WithTrace(ctx)
 		return err
@@ -128,13 +131,13 @@ func (s *EmailService) VerifyEmail(ctx context.Context, id int) error {
 		return err
 	}
 
-	err = s.repository.MarkUserAsVerified(ctx, id)
+	err = s.repository.MarkUserAsVerified(ctx, user.ID())
 	if err != nil {
 		s.logger.Error("db error", err).WithTrace(ctx)
 		return err
 	}
 
-	s.logger.Info("verify for user ", id, " is competed").WithTrace(ctx)
+	s.logger.Info("verify for user ", user.ID(), " is competed").WithTrace(ctx)
 
 	return nil
 }

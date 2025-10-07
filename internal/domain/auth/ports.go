@@ -14,6 +14,7 @@ type IUserRepository interface {
 type IUserRepositoryReader interface {
 	GetUserByName(ctx context.Context, name string) (*User, error)
 	GetUserByID(ctx context.Context, id int) (*User, error)
+	GetUserByToken(ctx context.Context, token string) (*User, error)
 }
 
 type IUserRepositoryWriter interface {

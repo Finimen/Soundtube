@@ -85,16 +85,16 @@ func (c *Container) initCore() error {
 
 	c.Logger = pkg.NewLogger(slog.Default(), c.Config.Traycing.Enabled)
 
+	c.initRateLimiter()
+	c.initRedis()
+
 	if err = c.initRepositories(); err != nil {
 		return err
 	}
 
-	c.initRateLimiter()
-
 	c.initServices()
 	c.initHandlers()
 
-	c.initRedis()
 	c.initGinEngine()
 	c.initServer()
 
@@ -122,7 +122,7 @@ func (c *Container) initRepositories() error {
 }
 
 func (c *Container) initServices() {
-	c.Email = services.NewEmailService(c.Config.Server.Host+c.Config.Server.Port, &c.Config.Email, c.Logger)
+	c.Email = services.NewEmailService(c.Repository.UserRepository, c.Config.Server.Host+c.Config.Server.Port, &c.Config.Email, c.Logger)
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
 	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.TokenBlackList, c.Logger)
 	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Logger)
@@ -152,7 +152,7 @@ func (c *Container) initGinEngine() {
 			auth.POST("/register", c.RegisterHandler.Register)
 			auth.POST("/login", c.LoginHandler.Login)
 			auth.POST("/logout", c.LoginHandler.Logout)
-			auth.POST("verify-email", c.VerifyHandler.VerifyEmail)
+			auth.GET("/verify-email", c.VerifyHandler.VerifyEmail)
 		}
 
 		var authRequered = api.Group("")
