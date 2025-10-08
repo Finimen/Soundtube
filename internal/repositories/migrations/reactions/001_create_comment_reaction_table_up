@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS comment_reactions(
+    comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
+    total_likes INTEGER DEFAULT 0,
+    total_dislikes INTEGER DEFAULT 0
+)

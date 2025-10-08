@@ -44,12 +44,13 @@ type Container struct {
 
 	Repository *repositories.RepositoryAdapter
 
-	RegisterHandler *handlers.RegisterHandler
-	LoginHandler    *handlers.LoginHandler
-	VerifyHandler   *handlers.EmailHandler
-	SoundHandler    *handlers.SoundHandler
-	CommentHandler  *handlers.CommentHandler
-	UploadHandler   *handlers.UploadHandler
+	RegisterHandler  *handlers.RegisterHandler
+	LoginHandler     *handlers.LoginHandler
+	VerifyHandler    *handlers.EmailHandler
+	SoundHandler     *handlers.SoundHandler
+	CommentHandler   *handlers.CommentHandler
+	UploadHandler    *handlers.UploadHandler
+	ReactionsHandler *handlers.ReactionHandler
 
 	Email           *services.EmailService
 	RegisterService *services.RegisterService
@@ -170,12 +171,20 @@ func (c *Container) initGinEngine() {
 
 			sounds.GET("/:id/comments", c.CommentHandler.GetComments)
 			sounds.POST("/:id/comments", c.CommentHandler.CreateComment)
+
+			sounds.PUT("/:id/reactions", c.ReactionsHandler.SetReactionSound)
+			sounds.DELETE("/:id/reactions", c.ReactionsHandler.DeleteReactionSound)
+			sounds.GET("/:id/reactions", c.ReactionsHandler.GetReactionSound)
 		}
 
 		var comments = authRequered.Group("/comments")
 		{
 			comments.PATCH("/:id", c.CommentHandler.UpdateComment)
 			comments.DELETE("/:id", c.CommentHandler.DeleteComment)
+
+			comments.PUT("/:id/reactions", c.ReactionsHandler.SetReactionComment)
+			comments.DELETE("/:id/reactions", c.ReactionsHandler.DeleteReactionComment)
+			comments.GET("/:id/reactions", c.ReactionsHandler.GetReactionComment)
 		}
 	}
 
