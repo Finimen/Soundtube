@@ -56,6 +56,7 @@ type Container struct {
 	RegisterService *services.RegisterService
 	LoginService    *services.LoginService
 	SoundService    *services.SoundService
+	ReactionService *services.ReactionService
 }
 
 func NewContainer() (*Container, error) {
@@ -128,6 +129,7 @@ func (c *Container) initServices() {
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
 	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.TokenBlackList, c.Logger)
 	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Repository.UserRepository, c.Logger)
+	c.ReactionService = services.NewRactionService(c.Repository.SoundReactionRepository, c.Repository.SoundPartisipantsRepository, c.Logger)
 }
 
 func (c *Container) initHandlers() {
@@ -136,6 +138,7 @@ func (c *Container) initHandlers() {
 	c.SoundHandler = handlers.NewSoundHandler(c.SoundService, c.Logger)
 	c.VerifyHandler = handlers.NewEmailHandler(c.Email, c.Logger)
 	c.UploadHandler = handlers.NewUploadHandler(c.SoundService, c.Logger)
+	c.ReactionsHandler = handlers.NewReactionHandler(c.ReactionService, c.Logger)
 }
 
 func (c *Container) initGinEngine() {

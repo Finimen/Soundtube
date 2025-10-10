@@ -7,97 +7,114 @@
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-            <div class="nav">
-                <div class="logo">SoundTube</div>
-                <div class="auth-section" id="authSection">
-                    <button class="btn btn-primary" onclick="showAuthModal('register')">Регистрация</button>
-                    <button class="btn btn-secondary" onclick="showAuthModal('login')">Вход</button>
-                </div>
-                <div class="user-info hidden" id="userInfo">
-                    <span id="userGreeting">Добро пожаловать!</span>
-                    <button class="logout-btn" onclick="logout()">Выйти</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="header">
     <div class="container">
-        <div class="upload-section hidden" id="uploadSection">
-            <h3>Загрузить новый трек</h3>
-            <form id="uploadForm">
-                <div class="form-group">
-                    <input type="text" class="form-control" id="soundName" placeholder="Название трека" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" class="form-control" id="soundAlbum" placeholder="Альбом" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" class="form-control" id="soundGenre" placeholder="Жанр" required>
-                </div>
-                <div class="form-group">
-                    <div class="file-drop-area" id="fileDropArea">
-                        <span class="file-msg">Перетащите аудио файл сюда или нажмите для выбора</span>
-                        <input type="file" class="file-input" id="soundFile" accept="audio/*" required>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Создать трек</button>
-            </form>
-        </div>
-
-        <div class="main-content">
-            <div class="sounds-list" id="soundsList">
-                <h3>Последние треки</h3>
+        <div class="nav">
+            <div class="logo">SoundTube</div>
+            <div class="auth-section" id="authSection">
+                <button class="btn btn-primary" onclick="showAuthModal('register')">Регистрация</button>
+                <button class="btn btn-secondary" onclick="showAuthModal('login')">Вход</button>
             </div>
-
-            <div class="sidebar">
-                <div class="upload-section">
-                    <h4>Быстрые действия</h4>
-                    <button class="btn btn-primary" onclick="loadSounds()" style="width: 100%; margin-bottom: 10px;">
-                        Обновить ленту
-                    </button>
-                    <button class="btn btn-secondary" onclick="showUploadSection()" style="width: 100%;">
-                        Загрузить трек
-                    </button>
-                </div>
+            <div class="user-info hidden" id="userInfo">
+                <span id="userGreeting">Добро пожаловать!</span>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="authModal" class="modal hidden">
-        <div class="modal-content">
-            <h3 id="modalTitle">Авторизация</h3>
-            <form id="authForm" novalidate>
-                <!-- Поля для регистрации -->
-                <div class="form-group hidden" id="nameField">
-                    <input type="text" class="form-control" id="registerName" placeholder="Имя пользователя" required>
-                    <div class="form-note">От 3 до 50 символов</div>
+<div class="container">
+    <div class="upload-section hidden" id="uploadSection">
+        <h3>Загрузить новый трек</h3>
+        <form id="uploadForm">
+            <div class="form-group">
+                <input type="text" class="form-control" id="soundName" placeholder="Название трека" required>
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-control" id="soundAlbum" placeholder="Альбом" required>
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-control" id="soundGenre" placeholder="Жанр" required>
+            </div>
+            <div class="form-group">
+                <div class="file-drop-area" id="fileDropArea">
+                    <span class="file-msg">Перетащите аудио файл сюда или нажмите для выбора</span>
+                    <input type="file" class="file-input" id="soundFile" accept="audio/*" required>
                 </div>
-                
-                <div class="form-group hidden" id="emailField">
-                    <input type="email" class="form-control" id="email" placeholder="Email" required>
-                </div>
-
-                <!-- Поле для логина -->
-                <div class="form-group" id="usernameField">
-                    <input type="text" class="form-control" id="loginUsername" placeholder="Имя пользователя" required>
-                </div>
-
-                <!-- Общее поле пароля -->
-                <div class="form-group">
-                    <input type="password" class="form-control" id="password" placeholder="Пароль" required>
-                    <div class="form-note" id="passwordNote">Минимум 6 символов</div>
-                </div>
-
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Отправить</button>
-                    <button type="button" class="btn btn-secondary" onclick="hideAuthModal()">Отмена</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Создать трек</button>
+        </form>
     </div>
 
-    <script src="static/app.js"></script>
+    <div class="main-content">
+        <div class="sounds-list" id="soundsList">
+            <h3>Последние треки</h3>
+        </div>
+
+        <div class="sidebar">
+            <div class="upload-section">
+                <h4>Быстрые действия</h4>
+                <button class="btn btn-primary" onclick="loadSounds()" style="width: 100%; margin-bottom: 10px;">
+                    Обновить ленту
+                </button>
+                <button class="btn btn-secondary" onclick="showUploadSection()" style="width: 100%;">
+                    Загрузить трек
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно авторизации -->
+<div id="authModal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="modalTitle">Авторизация</h3>
+        <form id="authForm" novalidate>
+            <div class="form-group hidden" id="nameField">
+                <input type="text" class="form-control" id="registerName" placeholder="Имя пользователя" required>
+                <div class="form-note">От 3 до 50 символов</div>
+            </div>
+
+            <div class="form-group hidden" id="emailField">
+                <input type="email" class="form-control" id="email" placeholder="Email" required>
+            </div>
+
+            <div class="form-group" id="usernameField">
+                <input type="text" class="form-control" id="loginUsername" placeholder="Имя пользователя" required>
+            </div>
+
+            <div class="form-group">
+                <input type="password" class="form-control" id="password" placeholder="Пароль" required>
+                <div class="form-note" id="passwordNote">Минимум 6 символов</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Отправить</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAuthModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно комментариев -->
+<div id="commentsModal" class="modal hidden">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3 id="commentsModalTitle">Комментарии</h3>
+            <button type="button" class="close-btn" onclick="hideCommentsModal()">&times;</button>
+        </div>
+        <div class="comments-section">
+            <div class="comments-list" id="commentsList">
+                <!-- Комментарии будут загружаться здесь -->
+            </div>
+            <div class="add-comment">
+                <textarea id="newCommentText" placeholder="Добавить комментарий..." rows="3"></textarea>
+                <button class="btn btn-primary" onclick="addComment()">Отправить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="static/app.js"></script>
 </body>
 </html>

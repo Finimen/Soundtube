@@ -2,20 +2,27 @@ const API_BASE = '/api';
 let currentToken = localStorage.getItem('authToken');
 let currentUserName = localStorage.getItem('userName');
 let currentSoundId = null;
+let currentCommentsSoundId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('App loaded, token exists:', !!currentToken);
     checkAuth();
-    
+
     if (currentToken) {
         loadSounds();
     } else {
         showUnauthorizedMessage();
     }
-    
+
     document.getElementById('authModal').addEventListener('click', function(e) {
         if (e.target === this) {
             hideAuthModal();
+        }
+    });
+
+    document.getElementById('commentsModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideCommentsModal();
         }
     });
 
@@ -26,48 +33,48 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeFileDrop() {
     const dropArea = document.getElementById('fileDropArea');
     const fileInput = document.getElementById('soundFile');
-    
+
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropArea.addEventListener(eventName, preventDefaults, false);
     });
-    
+
     function preventDefaults(e) {
         e.preventDefault();
         e.stopPropagation();
     }
-    
+
     ['dragenter', 'dragover'].forEach(eventName => {
         dropArea.addEventListener(eventName, highlight, false);
     });
-    
+
     ['dragleave', 'drop'].forEach(eventName => {
         dropArea.addEventListener(eventName, unhighlight, false);
     });
-    
+
     function highlight() {
         dropArea.classList.add('highlight');
     }
-    
+
     function unhighlight() {
         dropArea.classList.remove('highlight');
     }
-    
+
     dropArea.addEventListener('drop', handleDrop, false);
     dropArea.addEventListener('click', () => fileInput.click());
-    
+
     fileInput.addEventListener('change', handleFileSelect);
-    
+
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
         fileInput.files = files;
         handleFiles(files);
     }
-    
+
     function handleFileSelect() {
         handleFiles(this.files);
     }
-    
+
     function handleFiles(files) {
         if (files.length > 0) {
             const file = files[0];
@@ -115,9 +122,9 @@ function showAuthModal(type) {
     const emailField = document.getElementById('emailField');
     const usernameField = document.getElementById('usernameField');
     const passwordNote = document.getElementById('passwordNote');
-    
+
     form.reset();
-    
+
     if (type === 'register') {
         title.textContent = 'Регистрация';
         nameField.classList.remove('hidden');
@@ -131,9 +138,9 @@ function showAuthModal(type) {
         usernameField.classList.remove('hidden');
         passwordNote.textContent = 'Введите ваш пароль';
     }
-    
+
     modal.classList.remove('hidden');
-    
+
     form.onsubmit = function(e) {
         e.preventDefault();
         if (type === 'register') {
@@ -155,7 +162,7 @@ async function register() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    console.log('Registration data:', { username, email, password }); 
+    console.log('Registration data:', { username, email, password });
 
     if (username.length < 3 || username.length > 50) {
         alert('Имя пользователя должно быть от 3 до 50 символов');
@@ -173,10 +180,10 @@ async function register() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                username: username, 
-                email: email, 
-                password: password 
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password
             })
         });
 
@@ -194,7 +201,7 @@ async function register() {
 }
 
 async function login() {
-    const username = document.getElementById('loginUsername').value; 
+    const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('password').value;
 
     try {
@@ -203,24 +210,24 @@ async function login() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 username: username,
-                password: password 
+                password: password
             })
         });
 
         if (response.ok) {
             const data = await response.json();
-            console.log('Login response:', data); 
-            
-            currentToken = data.token || data; 
-            currentUserName = username; 
-            
+            console.log('Login response:', data);
+
+            currentToken = data.token || data;
+            currentUserName = username;
+
             localStorage.setItem('authToken', currentToken);
             localStorage.setItem('userName', currentUserName);
-            
+
             console.log('Token saved:', currentToken);
-            
+
             hideAuthModal();
             checkAuth();
             loadSounds();
@@ -244,7 +251,7 @@ async function logout() {
     } catch (error) {
         console.error('Ошибка выхода:', error);
     }
-    
+
     currentToken = null;
     currentUserName = null;
     localStorage.removeItem('authToken');
@@ -264,7 +271,7 @@ async function loadSounds() {
         }
 
         const response = await fetch(`${API_BASE}/sounds/`, { headers });
-        
+
         if (response.ok) {
             const sounds = await response.json();
             if (sounds.length === 0) {
@@ -287,15 +294,19 @@ async function loadSounds() {
 function createSoundElement(sound) {
     const div = document.createElement('div');
     div.className = 'sound-item';
-    
+    div.id = `sound-${sound.id}`;
+
     console.log('Sound data:', sound);
-    
+
     const soundName = sound.name || sound.title || 'Без названия';
     const soundAlbum = sound.album || 'Не указан';
     const soundGenre = sound.genre || 'Не указан';
     const authorId = sound.author_id || sound.authorID || 'Неизвестен';
     const filePath = sound.file_path || sound.filePath || sound.filename;
-    
+    const likes = sound.likes || 0;
+    const dislikes = sound.dislikes || 0;
+    const userReaction = sound.user_reaction || null;
+
     div.innerHTML = `
         <div class="sound-title">${escapeHtml(soundName)}</div>
         <div class="sound-info">
@@ -311,14 +322,236 @@ function createSoundElement(sound) {
                 Ваш браузер не поддерживает аудио элементы.
             </audio>
         ` : '<p>Аудио файл не загружен</p>'}
+        
+        <div class="sound-actions">
+            <div class="reactions">
+                <button class="reaction-btn ${userReaction === 'like' ? 'active' : ''}" onclick="setReaction(${sound.id}, 'like')">
+                    👍 ${likes}
+                </button>
+                <button class="reaction-btn ${userReaction === 'dislike' ? 'active' : ''}" onclick="setReaction(${sound.id}, 'dislike')">
+                    👎 ${dislikes}
+                </button>
+                <button class="comment-btn" onclick="showComments(${sound.id}, '${escapeHtml(soundName)}')">
+                    💬 Комментарии
+                </button>
+            </div>
+        </div>
     `;
-    
+
     return div;
+}
+
+// Функции для реакций
+async function setReaction(soundId, reactionType) {
+    if (!currentToken) {
+        alert('Для оценки трека необходимо авторизоваться');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/sounds/${soundId}/reactions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            },
+            body: JSON.stringify({ type: reactionType })
+        });
+
+        if (response.ok) {
+            // Обновляем отображение реакций
+            await updateSoundReactions(soundId);
+        } else {
+            const error = await response.text();
+            alert('Ошибка установки реакции: ' + error);
+        }
+    } catch (error) {
+        alert('Ошибка сети: ' + error.message);
+    }
+}
+
+async function deleteReaction(soundId) {
+    if (!currentToken) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/sounds/${soundId}/reactions`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${currentToken}`
+            }
+        });
+
+        if (response.ok) {
+            await updateSoundReactions(soundId);
+        }
+    } catch (error) {
+        console.error('Ошибка удаления реакции:', error);
+    }
+}
+
+async function updateSoundReactions(soundId) {
+    try {
+        const response = await fetch(`${API_BASE}/sounds/${soundId}/reactions`, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`
+            }
+        });
+
+        if (response.ok) {
+            const reactions = await response.json();
+            const soundElement = document.getElementById(`sound-${soundId}`);
+            if (soundElement) {
+                const likeBtn = soundElement.querySelector('.reaction-btn:nth-child(1)');
+                const dislikeBtn = soundElement.querySelector('.reaction-btn:nth-child(2)');
+
+                likeBtn.textContent = `👍 ${reactions.likes || 0}`;
+                dislikeBtn.textContent = `👎 ${reactions.dislikes || 0}`;
+
+                likeBtn.classList.toggle('active', reactions.user_reaction === 'like');
+                dislikeBtn.classList.toggle('active', reactions.user_reaction === 'dislike');
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка обновления реакций:', error);
+    }
+}
+
+// Функции для комментариев
+async function showComments(soundId, soundName) {
+    if (!currentToken) {
+        alert('Для просмотра комментариев необходимо авторизоваться');
+        return;
+    }
+
+    currentCommentsSoundId = soundId;
+    const modal = document.getElementById('commentsModal');
+    const title = document.getElementById('commentsModalTitle');
+
+    title.textContent = `Комментарии: ${soundName}`;
+    modal.classList.remove('hidden');
+
+    await loadComments(soundId);
+}
+
+function hideCommentsModal() {
+    const modal = document.getElementById('commentsModal');
+    modal.classList.add('hidden');
+    document.getElementById('newCommentText').value = '';
+    currentCommentsSoundId = null;
+}
+
+async function loadComments(soundId) {
+    const commentsList = document.getElementById('commentsList');
+    commentsList.innerHTML = '<p>Загрузка комментариев...</p>';
+
+    try {
+        const response = await fetch(`${API_BASE}/sounds/${soundId}/comments`, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`
+            }
+        });
+
+        if (response.ok) {
+            const comments = await response.json();
+            displayComments(comments);
+        } else {
+            commentsList.innerHTML = '<p>Ошибка загрузки комментариев</p>';
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки комментариев:', error);
+        commentsList.innerHTML = '<p>Ошибка загрузки комментариев</p>';
+    }
+}
+
+function displayComments(comments) {
+    const commentsList = document.getElementById('commentsList');
+
+    if (comments.length === 0) {
+        commentsList.innerHTML = '<p>Пока нет комментариев. Будьте первым!</p>';
+        return;
+    }
+
+    commentsList.innerHTML = comments.map(comment => `
+        <div class="comment-item">
+            <div class="comment-header">
+                <strong>${escapeHtml(comment.author_name || 'Аноним')}</strong>
+                <span class="comment-date">${new Date(comment.created_at).toLocaleString()}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.text)}</div>
+            <div class="comment-actions">
+                <button class="reaction-btn" onclick="setCommentReaction(${comment.id}, 'like')">
+                    👍 ${comment.likes || 0}
+                </button>
+                <button class="reaction-btn" onclick="setCommentReaction(${comment.id}, 'dislike')">
+                    👎 ${comment.dislikes || 0}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function addComment() {
+    if (!currentToken) {
+        return;
+    }
+
+    const text = document.getElementById('newCommentText').value.trim();
+    if (!text) {
+        alert('Введите текст комментария');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/sounds/${currentCommentsSoundId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            },
+            body: JSON.stringify({ text: text })
+        });
+
+        if (response.ok) {
+            document.getElementById('newCommentText').value = '';
+            await loadComments(currentCommentsSoundId);
+        } else {
+            const error = await response.text();
+            alert('Ошибка добавления комментария: ' + error);
+        }
+    } catch (error) {
+        alert('Ошибка сети: ' + error.message);
+    }
+}
+
+// Реакции для комментариев
+async function setCommentReaction(commentId, reactionType) {
+    if (!currentToken) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/comments/${commentId}/reactions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            },
+            body: JSON.stringify({ type: reactionType })
+        });
+
+        if (response.ok) {
+            await loadComments(currentCommentsSoundId);
+        }
+    } catch (error) {
+        console.error('Ошибка установки реакции на комментарий:', error);
+    }
 }
 
 document.getElementById('uploadForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    
+
     if (!currentToken) {
         alert('Для создания трека необходимо авторизоваться');
         return;
@@ -346,7 +579,7 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${currentToken}`
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 name: name,
                 album: album,
                 genre: genre
@@ -369,7 +602,7 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
             if (fileResponse.ok) {
                 alert('Трек успешно создан и файл загружен!');
                 document.getElementById('uploadForm').reset();
-                document.getElementById('fileDropArea').querySelector('.file-msg').textContent = 
+                document.getElementById('fileDropArea').querySelector('.file-msg').textContent =
                     'Перетащите аудио файл сюда или нажмите для выбора';
                 loadSounds();
             } else {

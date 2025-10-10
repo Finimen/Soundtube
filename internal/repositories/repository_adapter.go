@@ -15,6 +15,8 @@ type RepositoryAdapter struct {
 	db *sql.DB
 	*UserRepository
 	*SoundRepository
+	*SoundReactionRepository
+	*SoundPartisipantsRepository
 }
 
 func NewRepositoryAdapter(dbCfg *config.Database, connCfg *config.DatabaseConnections, logger *pkg.CustomLogger) (*RepositoryAdapter, error) {
@@ -47,6 +49,16 @@ func NewRepositoryAdapter(dbCfg *config.Database, connCfg *config.DatabaseConnec
 
 	if adapter.SoundRepository, err = NewSoundRepository(adapter.db, logger); err != nil {
 		logger.Error("sound repository failed", err).WithTrace(ctx)
+		return nil, err
+	}
+
+	if adapter.SoundReactionRepository, err = NewReactionRepository(adapter.db, logger); err != nil {
+		logger.Error("reaction repository failed", err).WithTrace(ctx)
+		return nil, err
+	}
+
+	if adapter.SoundPartisipantsRepository, err = NewSoundPartisipantsRepository(adapter.db, logger); err != nil {
+		logger.Error("reaction repository failed", err).WithTrace(ctx)
 		return nil, err
 	}
 
