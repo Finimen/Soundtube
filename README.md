@@ -307,9 +307,9 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ## 🆘 Support
 
-- 📧 Email: support@soundtube.com
-- 🐛 Issues: [GitHub Issues](https://github.com/your-username/soundtube/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/your-username/soundtube/discussions)
+- 📧 Email: finimensniper@gmail.com
+- 🐛 Issues: [GitHub Issues](https://github.com/Finimen/Soundtube/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/Finimen/Soundtube/discussions)
 
 ## 🙏 Acknowledgments
 
@@ -320,5 +320,6 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ---
 
 **SoundTube** - Share your sound with the world! 🎵
+
 
 
