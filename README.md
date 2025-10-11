@@ -47,22 +47,26 @@ A full-featured audio sharing and streaming platform built with Go, Gin, and Pos
 ```
 soundtube/
 ├── cmd/
+│   └── api/                # Entry point of app
 │   └── di/                 # Dependency injection container
 ├── internal/
 │   ├── domain/             # Domain models and interfaces
 │   │   ├── auth/           # Authentication domain
 │   │   ├── sound/          # Sound domain
+│   │   ├── comment/        # Comment domain
 │   │   └── reactions/      # Reactions domain
 │   ├── handlers/           # HTTP request handlers
 │   ├── services/           # Business logic layer
-│   └── repositories/       # Data access layer
+│   ├── repositories/       # Data access layer
+│   └── migrations/         # Database migrations
 ├── pkg/
 │   ├── config/             # Configuration management
 │   ├── middleware/         # HTTP middleware
 │   └── utils/              # Shared utilities
 ├── configs/                # Configuration files
+├── scripts/                # Small features for app in general
 ├── static/                 # Static files and uploads
-└── migrations/             # Database migrations
+
 ```
 
 ## 🚀 Quick Start
@@ -316,4 +320,5 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ---
 
 **SoundTube** - Share your sound with the world! 🎵
+
 
