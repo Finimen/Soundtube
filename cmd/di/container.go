@@ -3,6 +3,7 @@ package di
 import (
 	"log/slog"
 	"net/http"
+	"soundtube/internal/domain"
 	"soundtube/internal/domain/auth"
 	"soundtube/internal/handlers"
 	"soundtube/internal/repositories"
@@ -35,6 +36,7 @@ type Container struct {
 
 	Engine *gin.Engine
 	Redis  *redis.Client
+	Cache  domain.ICache
 
 	Server *http.Server
 
@@ -120,6 +122,7 @@ func (c *Container) initRepositories() error {
 	}
 
 	c.TokenBlackList = repositories.NewTokenBlacklist(c.Redis, c.Logger)
+	c.Cache = repositories.NewRedisCache(c.Redis)
 
 	return nil
 }
@@ -129,7 +132,7 @@ func (c *Container) initServices() {
 	c.RegisterService = services.NewRegisterService(c.Repository, c.Email, c.Logger)
 	c.LoginService = services.NewLoginService(c.Config.Token, c.Repository.UserRepository, c.TokenBlackList, c.Logger)
 	c.SoundService = services.NewSoundService(c.Repository.SoundRepository, c.Repository.UserRepository, c.Logger)
-	c.ReactionService = services.NewRactionService(c.Repository.SoundReactionRepository, c.Repository.SoundPartisipantsRepository, c.Logger)
+	c.ReactionService = services.NewRactionService(c.Repository.SoundReactionRepository, c.Repository.SoundPartisipantsRepository, c.Cache, c.Logger)
 }
 
 func (c *Container) initHandlers() {
@@ -247,6 +250,11 @@ func (c *Container) initTraycing() error {
 	c.Tracer = c.TraceProvider.Tracer("app")
 
 	c.Logger.SetTracer(c.Tracer)
+
+	c.Logger.Info("Initializing tracing",
+		"service_name", c.Config.Traycing.ServiceName,
+		"endpoint", c.Config.Traycing.Endpoint,
+	)
 
 	return nil
 }

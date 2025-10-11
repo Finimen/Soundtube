@@ -11,6 +11,27 @@ import (
 	"time"
 )
 
+// @title SoundTube API
+// @version 1.0
+// @description Audio sharing and streaming platform API
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api
+// @schemes http
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token
+
 func getContainer() *di.Container {
 	var container, err = di.NewContainer()
 	if err != nil {
@@ -20,6 +41,9 @@ func getContainer() *di.Container {
 	return container
 }
 
+// main is the entry point of the SoundTube application
+// @Summary SoundTube Server
+// @Description Main server for SoundTube audio platform handling authentication, audio uploads, and social features
 func main() {
 	var container = getContainer()
 

@@ -1,0 +1,740 @@
+basePath: /api
+definitions:
+  handlers.CreateCommentRequest:
+    properties:
+      content:
+        example: Great sound!
+        type: string
+    type: object
+  handlers.CreateSoundRequest:
+    properties:
+      album:
+        example: Summer Vibes
+        type: string
+      genre:
+        example: Electronic
+        type: string
+      name:
+        example: My Awesome Sound
+        type: string
+    type: object
+  handlers.DeleteSoundRequest:
+    properties:
+      name:
+        example: Sound to delete
+        type: string
+    type: object
+  handlers.LoginRequest:
+    properties:
+      password:
+        example: securepassword123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  handlers.LogoutRequest:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: securepassword123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  handlers.SetReactionRequest:
+    properties:
+      type:
+        enum:
+        - like
+        - dislike
+        example: like
+        type: string
+    type: object
+  handlers.UpdateCommentRequest:
+    properties:
+      content:
+        example: Updated comment content
+        type: string
+    type: object
+  handlers.UpdateSoundRequest:
+    properties:
+      album:
+        example: Updated Album
+        type: string
+      genre:
+        example: Updated Genre
+        type: string
+      name:
+        example: Updated Sound Name
+        type: string
+    type: object
+  handlers.UploadRequest:
+    properties:
+      filename:
+        example: mysound.mp3
+        type: string
+      full_path:
+        example: /app/static/uploads/mysound.mp3
+        type: string
+      message:
+        example: file uploaded successfully
+        type: string
+      path:
+        example: uploads/mysound.mp3
+        type: string
+    type: object
+  sound.SoundDTO:
+    properties:
+      album:
+        type: string
+      author_id:
+        type: integer
+      duration:
+        type: integer
+      file_format:
+        type: string
+      file_name:
+        type: string
+      file_path:
+        type: string
+      file_size:
+        type: integer
+      genre:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: string
+      upload_date:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Audio sharing and streaming platform API
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: SoundTube API
+  version: "1.0"
+paths:
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - authentication
+  /api/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate user JWT token by adding to blacklist
+      parameters:
+      - description: JWT token to invalidate
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+        "400":
+          description: Invalid input format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - authentication
+  /api/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account with username, email and password
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User successfully registered
+        "400":
+          description: Invalid input format or registration error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - authentication
+  /api/auth/verify-email:
+    get:
+      description: Verify user email address using verification token
+      parameters:
+      - description: Email verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Token is required or invalid
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify email
+      tags:
+      - authentication
+  /api/comments/{id}:
+    delete:
+      description: Delete a comment by ID
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comment deleted successfully
+          schema:
+            type: object
+        "403":
+          description: Forbidden - not comment owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete comment
+      tags:
+      - comments
+    patch:
+      consumes:
+      - application/json
+      description: Update a comment by ID
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated comment data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comment updated successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden - not comment owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update comment
+      tags:
+      - comments
+  /api/sounds:
+    get:
+      description: Get a list of all available sounds
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of sounds
+          schema:
+            items:
+              $ref: '#/definitions/sound.SoundDTO'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all sounds
+      tags:
+      - sounds
+    post:
+      consumes:
+      - application/json
+      description: Create a new sound record (without file upload)
+      parameters:
+      - description: Sound data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateSoundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sound created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid input format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create sound
+      tags:
+      - sounds
+  /api/sounds/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a sound by name
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Delete data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DeleteSoundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sound deleted successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden - not sound owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Sound not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete sound
+      tags:
+      - sounds
+    patch:
+      consumes:
+      - application/json
+      description: Update sound information
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update sound data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateSoundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sound updated successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden - not sound owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Sound not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update sound
+      tags:
+      - sounds
+  /api/sounds/{id}/comments:
+    get:
+      description: Get all comments for a specific sound
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of comments
+          schema:
+            items:
+              type: object
+            type: array
+        "400":
+          description: Invalid sound ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get sound comments
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Add a new comment to a sound
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Comment data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Comment created successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input or sound ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create comment
+      tags:
+      - comments
+  /api/sounds/{id}/reactions:
+    delete:
+      description: Remove user's reaction from a sound
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reaction deleted successfully
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Reaction not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete sound reaction
+      tags:
+      - reactions
+    get:
+      description: Get all reactions for a specific sound
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of reactions
+          schema:
+            items:
+              type: object
+            type: array
+        "400":
+          description: Invalid sound ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get sound reactions
+      tags:
+      - reactions
+    put:
+      consumes:
+      - application/json
+      description: Set like or dislike reaction for a sound
+      parameters:
+      - description: Sound ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Reaction type
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SetReactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reaction set successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input or reaction type
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set sound reaction
+      tags:
+      - reactions
+  /api/sounds/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an audio file for an existing sound record
+      parameters:
+      - description: Audio file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Sound name to associate with file
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Upload sound file
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UploadRequest'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Missing file or sound name
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: File upload or database update failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload sound file
+      tags:
+      - sounds
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

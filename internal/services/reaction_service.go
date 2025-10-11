@@ -2,16 +2,21 @@ package services
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"soundtube/internal/domain"
 	"soundtube/internal/domain/reactions"
 	"soundtube/internal/repositories"
 	"soundtube/pkg"
 	"sync"
+	"time"
 )
 
 type ReactionService struct {
 	repository   *repositories.SoundReactionRepository
 	participants *repositories.SoundPartisipantsRepository
 	logger       *pkg.CustomLogger
+	cache        domain.ICache
 }
 
 type SoundReactionsResponse struct {
@@ -21,10 +26,11 @@ type SoundReactionsResponse struct {
 	UserReaction *string `json:"user_reaction,omitempty"`
 }
 
-func NewRactionService(repository *repositories.SoundReactionRepository, participants *repositories.SoundPartisipantsRepository, logger *pkg.CustomLogger) *ReactionService {
+func NewRactionService(repository *repositories.SoundReactionRepository, participants *repositories.SoundPartisipantsRepository, cache domain.ICache, logger *pkg.CustomLogger) *ReactionService {
 	return &ReactionService{
 		repository:   repository,
 		participants: participants,
+		cache:        cache,
 		logger:       logger,
 	}
 }
@@ -59,6 +65,13 @@ func (s *ReactionService) SetSoundReaction(ctx context.Context, userID, soundID 
 		return err
 	}
 
+	cacheKey := fmt.Sprintf("sound_reactions:stats:%d", soundID)
+	if err := s.cache.Delete(ctx, cacheKey); err != nil {
+		s.logger.Warn("failed to invalidate reaction cache", err).WithTrace(ctx)
+	} else {
+		s.logger.Info("reaction cache invalidated", "sound_id", soundID).WithTrace(ctx)
+	}
+
 	return s.participants.AddOrUpdate(ctx, userID, soundID, reactionType)
 }
 
@@ -66,9 +79,27 @@ func (s *ReactionService) GetSoundReactions(ctx context.Context, userID, soundID
 	ctx, span := s.logger.GetTracer().Start(ctx, "ReactionService.GetSoundReactions")
 	defer span.End()
 
-	reactionStats, err := s.repository.GetReactionStats(ctx, soundID)
-	if err != nil {
-		return nil, err
+	cashedKey := fmt.Sprintf("sound_reactions:stats%d", soundID)
+
+	var reactionStats *repositories.ReactionStatus
+	if cashed, err := s.cache.Get(ctx, cashedKey); err == nil {
+		if err := json.Unmarshal([]byte(cashed), &reactionStats); err == nil {
+			s.logger.Info("reaction stats loaded from cache", "sound_id", soundID).WithTrace(ctx)
+		}
+	}
+
+	if reactionStats == nil {
+		var err error
+		reactionStats, err = s.repository.GetReactionStats(ctx, soundID)
+		if err != nil {
+			return nil, err
+		}
+
+		if data, err := json.Marshal(reactionStats); err != nil {
+			if err := s.cache.Set(ctx, cashedKey, data, 15*time.Minute); err != nil {
+				s.logger.Warn("failed to cache reaction stats", err).WithTrace(ctx)
+			}
+		}
 	}
 
 	var userReaction *string

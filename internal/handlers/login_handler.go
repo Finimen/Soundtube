@@ -18,6 +18,17 @@ func NewLoginHandler(service *services.LoginService, logger *pkg.CustomLogger) *
 	return &LoginHandler{service: service, logger: logger}
 }
 
+// Login authenticates user and returns JWT token
+// @Summary User login
+// @Description Authenticate user and return JWT token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login credentials"
+// @Success 200 {object} map[string]string "Login successful"
+// @Failure 400 {object} map[string]string "Invalid input format"
+// @Failure 401 {object} map[string]string "Invalid credentials"
+// @Router /api/auth/login [post]
 func (h *LoginHandler) Login(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "LoginHandler.Login")
 	defer span.End()
@@ -47,6 +58,17 @@ func (h *LoginHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+// Logout invalidates user token
+// @Summary User logout
+// @Description Invalidate user JWT token by adding to blacklist
+// @Tags authentication
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body LogoutRequest true "JWT token to invalidate"
+// @Success 200 {object} nil "Logout successful"
+// @Failure 400 {object} map[string]string "Invalid input format"
+// @Router /api/auth/logout [post]
 func (h *LoginHandler) Logout(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "LoginHandler.Login")
 	defer span.End()

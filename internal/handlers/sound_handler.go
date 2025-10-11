@@ -21,6 +21,15 @@ func NewSoundHandler(service *services.SoundService, logger *pkg.CustomLogger) *
 	return &SoundHandler{service: service, logger: logger}
 }
 
+// GetSounds retrieves all sounds
+// @Summary Get all sounds
+// @Description Get a list of all available sounds
+// @Tags sounds
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {array} sound.SoundDTO "List of sounds"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/sounds [get]
 func (h *SoundHandler) GetSounds(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "SoundHandler.GetSounds")
 	defer span.End()
@@ -37,6 +46,19 @@ func (h *SoundHandler) GetSounds(c *gin.Context) {
 	c.JSON(http.StatusOK, soundDTOs)
 }
 
+// CreateSound creates a new sound record
+// @Summary Create sound
+// @Description Create a new sound record (without file upload)
+// @Tags sounds
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body CreateSoundRequest true "Sound data"
+// @Success 200 {object} string "Sound created successfully"
+// @Failure 400 {object} map[string]string "Invalid input format"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/sounds [post]
 func (h *SoundHandler) CreateSound(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "SoundHandler.CreateSound")
 	defer span.End()
@@ -89,10 +111,38 @@ func (h *SoundHandler) CreateSound(c *gin.Context) {
 	c.JSON(http.StatusOK, "req.Name"+" was created!")
 }
 
+// UpdateSound updates an existing sound
+// @Summary Update sound
+// @Description Update sound information
+// @Tags sounds
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Sound ID"
+// @Param request body UpdateSoundRequest true "Update sound data"
+// @Success 200 {object} object "Sound updated successfully"
+// @Failure 400 {object} map[string]string "Invalid input"
+// @Failure 403 {object} map[string]string "Forbidden - not sound owner"
+// @Failure 404 {object} map[string]string "Sound not found"
+// @Router /api/sounds/{id} [patch]
 func (h *SoundHandler) UpdateSound(c *gin.Context) {
 	//TODO: Implement update func
 }
 
+// DeleteSound deletes a sound
+// @Summary Delete sound
+// @Description Delete a sound by name
+// @Tags sounds
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Sound ID"
+// @Param request body DeleteSoundRequest true "Delete data"
+// @Success 200 {object} object "Sound deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid input"
+// @Failure 403 {object} map[string]string "Forbidden - not sound owner"
+// @Failure 404 {object} map[string]string "Sound not found"
+// @Router /api/sounds/{id} [delete]
 func (h *SoundHandler) DeleteSound(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "SoundHandler.DeleteSound")
 	defer span.End()

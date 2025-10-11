@@ -18,6 +18,16 @@ func NewRegisterHandler(service *services.RegisterService, logger *pkg.CustomLog
 	return &RegisterHandler{service: service, logger: logger}
 }
 
+// Register handles user registration
+// @Summary Register a new user
+// @Description Creates a new user account with username, email and password
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "Registration data"
+// @Success 200 {object} nil "User successfully registered"
+// @Failure 400 {object} map[string]string "Invalid input format or registration error"
+// @Router /api/auth/register [post]
 func (h *RegisterHandler) Register(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "RegisterHandler.Register")
 	defer span.End()

@@ -20,6 +20,19 @@ func NewUploadHandler(service *services.SoundService, logger *pkg.CustomLogger) 
 	return &UploadHandler{service: service, logger: logger}
 }
 
+// UploadSoundFile handles audio file upload
+// @Summary Upload sound file
+// @Description Upload an audio file for an existing sound record
+// @Tags sounds
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "Audio file to upload"
+// @Param name formData string true "Sound name to associate with file"
+// @Param request body UploadRequest true "Upload sound file"
+// @Failure 400 {object} map[string]string "Missing file or sound name"
+// @Failure 500 {object} map[string]string "File upload or database update failed"
+// @Router /api/sounds/upload [post]
 func (h *UploadHandler) UploadSoundFile(c *gin.Context) {
 	ctx, span := h.logger.GetTracer().Start(c.Request.Context(), "UploadHandler.UploadSoundFile")
 	defer span.End()
