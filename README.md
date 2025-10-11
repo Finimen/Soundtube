@@ -318,9 +318,20 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 - PostgreSQL and Redis communities
 - OpenTelemetry for observability tools
 
+## Screens
+<img width="1898" height="941" alt="Screenshot 2025-10-11 134913" src="https://github.com/user-attachments/assets/51dd9751-c7e3-4aab-8b57-a0d3ab40e323" />
+<img width="1110" height="865" alt="Screenshot 2025-10-11 134902" src="https://github.com/user-attachments/assets/0bbb3552-514d-4ed7-be2d-21b882c7156b" />
+<img width="1088" height="929" alt="Screenshot 2025-10-11 134851" src="https://github.com/user-attachments/assets/5eea33fd-c673-46f2-bcb6-35995fd61d5b" />
+<img width="1082" height="764" alt="Screenshot 2025-10-11 134800" src="https://github.com/user-attachments/assets/bc4360ec-4dc5-411d-8827-6e4cfa64c6c3" />
+<img width="1104" height="777" alt="Screenshot 2025-10-11 134749" src="https://github.com/user-attachments/assets/6b878b4d-3374-43c9-9318-af86885e5104" />
+<img width="1177" height="797" alt="Screenshot 2025-10-11 134741" src="https://github.com/user-attachments/assets/b963c7cc-0f3f-4ee0-8def-15248d6c84f9" />
+
+
+
 ---
 
 **SoundTube** - Share your sound with the world! 🎵
+
 
 
 
