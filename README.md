@@ -299,7 +299,7 @@ spec:
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/Finimen/Soundtube/blob/main/License.md) file for details.
 
 ## 🆘 Support
 
@@ -316,3 +316,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **SoundTube** - Share your sound with the world! 🎵
+
