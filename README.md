@@ -66,7 +66,7 @@ soundtube/
 │   └── utils/              # Shared utilities
 ├── configs/                # Configuration files
 ├── scripts/                # Small features for app in general
-├── static/                 # Static files and uploads
+└── static/                 # Static files and uploads
 
 ```
 
@@ -321,6 +321,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ---
 
 **SoundTube** - Share your sound with the world! 🎵
+
 
 
 
