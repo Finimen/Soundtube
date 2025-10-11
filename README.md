@@ -49,6 +49,7 @@ soundtube/
 ├── cmd/
 │   └── api/                # Entry point of app
 │   └── di/                 # Dependency injection container
+├── docs/                   # Swagger docs
 ├── internal/
 │   ├── domain/             # Domain models and interfaces
 │   │   ├── auth/           # Authentication domain
@@ -320,6 +321,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ---
 
 **SoundTube** - Share your sound with the world! 🎵
+
 
 
 
